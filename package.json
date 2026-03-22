@@ -1,0 +1,31 @@
+{
+  "name": "todo-app",
+  "version": "1.0.0",
+  "description": "桌面待办事项管理工具",
+  "main": "./out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "dependencies": {
+    "dayjs": "^1.11.10",
+    "electron-store": "^8.2.0",
+    "pinia": "^2.1.7",
+    "element-plus": "^2.5.6",
+    "@element-plus/icons-vue": "^2.3.1",
+    "uuid": "^9.0.0",
+    "vue": "^3.4.21"
+  },
+  "devDependencies": {
+    "@types/uuid": "^9.0.7",
+    "@vitejs/plugin-vue": "^5.0.4",
+    "electron": "^28.2.0",
+    "electron-builder": "^24.9.1",
+    "electron-vite": "^2.0.0",
+    "typescript": "^5.3.3",
+    "vite": "^5.1.0"
+  }
+}
