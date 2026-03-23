@@ -123,7 +123,7 @@ async function handleBatchDelete() {
 }
 
 .todo-list {
-  padding: 0 16px;
+  padding: 8px 20px;
 }
 
 .empty-state {
