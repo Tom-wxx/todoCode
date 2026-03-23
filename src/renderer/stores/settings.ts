@@ -38,13 +38,13 @@ export const useSettingsStore = defineStore('settings', () => {
   async function addCategory(name: string) {
     if (!categories.value.includes(name)) {
       categories.value.push(name)
-      await getApi().store.set('categories', categories.value)
+      await getApi().store.set('categories', [...categories.value])
     }
   }
 
   async function removeCategory(name: string) {
     categories.value = categories.value.filter(c => c !== name)
-    await getApi().store.set('categories', categories.value)
+    await getApi().store.set('categories', [...categories.value])
   }
 
   return { darkMode, categories, showStats, showSettings, load, toggleDarkMode, addCategory, removeCategory }

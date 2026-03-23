@@ -20,7 +20,7 @@ export const useTodoStore = defineStore('todo', () => {
 
   // 保存到 electron-store
   async function saveTodos() {
-    await getApi().store.set('todos', todos.value)
+    await getApi().store.set('todos', JSON.parse(JSON.stringify(todos.value)))
   }
 
   // 筛选后的待办列表
