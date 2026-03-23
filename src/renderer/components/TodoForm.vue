@@ -56,12 +56,17 @@ async function handleSubmit() {
     ElMessage.warning('请输入标题')
     return
   }
-  if (props.todo) {
-    await todoStore.updateTodo(props.todo.id, { ...form.value })
-    ElMessage.success('已更新')
-  } else {
-    await todoStore.addTodo({ ...form.value })
-    ElMessage.success('已添加')
+  try {
+    if (props.todo) {
+      await todoStore.updateTodo(props.todo.id, { ...form.value })
+      ElMessage.success('已更新')
+    } else {
+      await todoStore.addTodo({ ...form.value })
+      ElMessage.success('已添加')
+    }
+  } catch (e) {
+    console.error('保存失败', e)
+    ElMessage.error('保存失败，请重试')
   }
   emit('close')
 }
