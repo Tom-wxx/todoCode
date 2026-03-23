@@ -3,7 +3,7 @@
  */
 const config = {
   appId: 'com.todo.app',
-  productName: '待办事项',
+  productName: 'TodoApp',
   directories: {
     buildResources: 'resources',
     output: 'dist'
@@ -19,7 +19,7 @@ const config = {
     allowToChangeInstallationDirectory: true,
     createDesktopShortcut: true,
     createStartMenuShortcut: true,
-    shortcutName: '待办事项'
+    shortcutName: 'TodoApp'
   }
 }
 
