@@ -11,7 +11,15 @@ const config = {
   files: ['out/**/*', 'resources/**/*'],
   win: {
     target: ['nsis'],
-    icon: 'resources/icon.png'
+    icon: 'resources/icon.png',
+    signAndEditExecutable: false
+  },
+  nsis: {
+    oneClick: false,
+    allowToChangeInstallationDirectory: true,
+    createDesktopShortcut: true,
+    createStartMenuShortcut: true,
+    shortcutName: '待办事项'
   }
 }
 
