@@ -23,6 +23,12 @@ const form = ref({
 
 const tagInput = ref('')
 
+const priorityOptions = [
+  { value: 'high' as const, label: '高优先级' },
+  { value: 'medium' as const, label: '中优先级' },
+  { value: 'low' as const, label: '低优先级' },
+]
+
 watch(() => props.visible, (val) => {
   if (val && props.todo) {
     form.value = {
@@ -89,17 +95,17 @@ async function handleSubmit() {
       </el-form-item>
       <el-form-item label="优先级">
         <div class="priority-selector">
-          <el-radio-group v-model="form.priority">
-            <el-radio-button value="high" :class="{ 'priority-active-high': form.priority === 'high' }">
-              <span style="color: var(--priority-high)">高</span>
-            </el-radio-button>
-            <el-radio-button value="medium" :class="{ 'priority-active-medium': form.priority === 'medium' }">
-              <span style="color: var(--priority-medium)">中</span>
-            </el-radio-button>
-            <el-radio-button value="low" :class="{ 'priority-active-low': form.priority === 'low' }">
-              <span style="color: var(--priority-low)">低</span>
-            </el-radio-button>
-          </el-radio-group>
+          <button
+            v-for="item in priorityOptions"
+            :key="item.value"
+            type="button"
+            class="priority-btn"
+            :class="[`priority-btn--${item.value}`, { active: form.priority === item.value }]"
+            @click="form.priority = item.value"
+          >
+            <span class="priority-dot" />
+            {{ item.label }}
+          </button>
         </div>
       </el-form-item>
       <el-form-item label="分类">
@@ -108,23 +114,21 @@ async function handleSubmit() {
         </el-select>
       </el-form-item>
       <el-form-item label="标签">
-        <div class="tags-container">
-          <el-tag
+        <div class="tag-input-box">
+          <span
             v-for="tag in form.tags"
             :key="tag"
-            closable
-            size="small"
-            @close="removeTag(tag)"
-            style="margin-right: 4px; margin-bottom: 4px"
+            class="tag-chip"
           >
             {{ tag }}
-          </el-tag>
-          <el-input
+            <span class="tag-remove" @click="removeTag(tag)">×</span>
+          </span>
+          <input
             v-model="tagInput"
-            size="small"
-            placeholder="输入标签后回车"
-            style="width: 130px"
+            class="tag-input"
+            placeholder="输入后回车添加"
             @keyup.enter="addTag"
+            @keyup.delete="tagInput === '' && form.tags.pop()"
           />
         </div>
       </el-form-item>
@@ -155,38 +159,122 @@ async function handleSubmit() {
 </template>
 
 <style scoped>
-.tags-container {
+/* ===== 优先级选择器 ===== */
+.priority-selector {
+  display: flex;
+  gap: 8px;
+}
+
+.priority-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1.5px solid var(--border-color);
+  background: transparent;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.18s;
+  outline: none;
+}
+
+.priority-btn:hover {
+  border-color: currentColor;
+}
+
+.priority-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* 高 */
+.priority-btn--high .priority-dot { background: var(--priority-high); }
+.priority-btn--high:hover,
+.priority-btn--high.active {
+  color: var(--priority-high);
+  border-color: var(--priority-high);
+  background: rgba(245, 108, 108, 0.08);
+}
+
+/* 中 */
+.priority-btn--medium .priority-dot { background: var(--priority-medium); }
+.priority-btn--medium:hover,
+.priority-btn--medium.active {
+  color: var(--priority-medium);
+  border-color: var(--priority-medium);
+  background: rgba(230, 162, 60, 0.08);
+}
+
+/* 低 */
+.priority-btn--low .priority-dot { background: var(--priority-low); }
+.priority-btn--low:hover,
+.priority-btn--low.active {
+  color: var(--priority-low);
+  border-color: var(--priority-low);
+  background: rgba(103, 194, 58, 0.08);
+}
+
+/* ===== 标签输入区 ===== */
+.tag-input-box {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 2px;
+  gap: 6px;
+  width: 100%;
+  min-height: 36px;
+  padding: 5px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-primary);
+  transition: border-color 0.2s;
+  cursor: text;
 }
 
-.priority-selector :deep(.el-radio-button) {
-  position: relative;
+.tag-input-box:focus-within {
+  border-color: var(--accent);
 }
 
-.priority-selector :deep(.priority-active-high .el-radio-button__inner)::after,
-.priority-selector :deep(.priority-active-medium .el-radio-button__inner)::after,
-.priority-selector :deep(.priority-active-low .el-radio-button__inner)::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  border-radius: 0 0 4px 4px;
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.6;
 }
 
-.priority-selector :deep(.priority-active-high .el-radio-button__inner)::after {
-  background: var(--priority-high);
+.tag-remove {
+  font-size: 14px;
+  line-height: 1;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.15s;
 }
 
-.priority-selector :deep(.priority-active-medium .el-radio-button__inner)::after {
-  background: var(--priority-medium);
+.tag-remove:hover {
+  color: var(--priority-high);
 }
 
-.priority-selector :deep(.priority-active-low .el-radio-button__inner)::after {
-  background: var(--priority-low);
+.tag-input {
+  flex: 1;
+  min-width: 100px;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 13px;
+  color: var(--text-primary);
+  padding: 0;
+}
+
+.tag-input::placeholder {
+  color: var(--text-muted);
 }
 </style>
