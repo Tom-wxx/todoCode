@@ -238,11 +238,13 @@ function setupIPC(): void {
     })
     if (!result.canceled && result.filePaths.length > 0) {
       const newPath = result.filePaths[0]
+      // 必须在创建 Store 之前检查，因为 Store 构造时会自动将 defaults 写入磁盘
+      const existingFile = join(newPath, 'todo-data.json')
+      const hasExistingData = fs.existsSync(existingFile)
       configStore.set('dataPath', newPath)
       const newStore = new Store({ cwd: newPath, name: 'todo-data', defaults: DATA_STORE_DEFAULTS })
       // 目标目录没有已有数据文件时，将当前数据迁移过去
-      const existingFile = join(newPath, 'todo-data.json')
-      if (!fs.existsSync(existingFile)) {
+      if (!hasExistingData) {
         newStore.set('todos', store.get('todos'))
         newStore.set('categories', store.get('categories'))
         newStore.set('settings', store.get('settings'))
