@@ -154,12 +154,28 @@ function setupIPC(): void {
 
   ipcMain.handle('store:get', (_event, key: string) => {
     if (!ALLOWED_KEYS.includes(key)) return null
-    return store.get(key)
+    try {
+      return store.get(key)
+    } catch (e) {
+      writeLog('ERROR', `store.get 失败 (key=${key}): ${e}，尝试回退到默认路径`)
+      configStore.set('dataPath', '')
+      store = createDataStore()
+      return store.get(key)
+    }
   })
 
   ipcMain.handle('store:set', (_event, key: string, value: any) => {
     if (!ALLOWED_KEYS.includes(key)) return
-    store.set(key, value)
+    try {
+      store.set(key, value)
+    } catch (e) {
+      // 自定义路径写入失败，重置为默认路径并重试
+      writeLog('ERROR', `store.set 失败 (key=${key}): ${e}，尝试回退到默认路径`)
+      configStore.set('dataPath', '')
+      store = createDataStore()
+      store.set(key, value)
+      writeLog('WARN', '已自动回退到默认数据路径')
+    }
   })
 
   ipcMain.handle('window:minimize', () => mainWindow?.minimize())
