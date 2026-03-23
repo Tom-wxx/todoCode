@@ -1,18 +1,17 @@
 <script setup lang="ts">
 import { useTodoStore } from '../stores/todo'
 import { useSettingsStore } from '../stores/settings'
+import { PRIORITY_LABELS_FULL, PRIORITY_HEX_COLORS } from '../utils/constants'
 
 const todoStore = useTodoStore()
 const settingsStore = useSettingsStore()
 
 function getPriorityLabel(key: string) {
-  const map: Record<string, string> = { high: '高优先级', medium: '中优先级', low: '低优先级' }
-  return map[key] || key
+  return PRIORITY_LABELS_FULL[key] || key
 }
 
 function getPriorityColor(key: string) {
-  const map: Record<string, string> = { high: '#f56c6c', medium: '#e6a23c', low: '#67c23a' }
-  return map[key] || '#909399'
+  return PRIORITY_HEX_COLORS[key] || '#909399'
 }
 
 function getWeekDay(dateStr: string) {

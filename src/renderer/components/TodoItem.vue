@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useTodoStore } from '../stores/todo'
 import { formatDate, isOverdue, isToday, type Todo } from '../utils/helpers'
+import { PRIORITY_COLORS, PRIORITY_LABELS } from '../utils/constants'
 import { ElMessageBox, ElMessage } from 'element-plus'
 
 const props = defineProps<{ todo: Todo; selected?: boolean }>()
@@ -11,13 +12,11 @@ const emit = defineEmits<{
 const todoStore = useTodoStore()
 
 function getPriorityColor(priority: string) {
-  const map: Record<string, string> = { high: 'var(--priority-high)', medium: 'var(--priority-medium)', low: 'var(--priority-low)' }
-  return map[priority] || 'var(--text-muted)'
+  return PRIORITY_COLORS[priority] || 'var(--text-muted)'
 }
 
 function getPriorityLabel(priority: string) {
-  const map: Record<string, string> = { high: '高', medium: '中', low: '低' }
-  return map[priority] || ''
+  return PRIORITY_LABELS[priority] || ''
 }
 
 function getDueDateClass() {
@@ -50,14 +49,14 @@ async function handleDelete() {
       class="todo-checkbox"
     />
     <el-tooltip
-      v-if="todo.description"
+      :disabled="!todo.description"
       :content="todo.description"
       placement="top"
       :show-after="500"
     >
       <div class="todo-info" @click="emit('edit', todo)">
         <div class="todo-title">{{ todo.title }}</div>
-        <div class="todo-description">{{ todo.description }}</div>
+        <div v-if="todo.description" class="todo-description">{{ todo.description }}</div>
         <div class="todo-meta">
           <span class="priority-tag" :style="{ color: getPriorityColor(todo.priority), borderColor: getPriorityColor(todo.priority) }">
             {{ getPriorityLabel(todo.priority) }}
@@ -71,20 +70,6 @@ async function handleDelete() {
         </div>
       </div>
     </el-tooltip>
-    <div v-else class="todo-info" @click="emit('edit', todo)">
-      <div class="todo-title">{{ todo.title }}</div>
-      <div class="todo-meta">
-        <span class="priority-tag" :style="{ color: getPriorityColor(todo.priority), borderColor: getPriorityColor(todo.priority) }">
-          {{ getPriorityLabel(todo.priority) }}
-        </span>
-        <span v-if="todo.category" class="category-tag">{{ todo.category }}</span>
-        <span v-for="tag in todo.tags" :key="tag" class="tag">{{ tag }}</span>
-        <span v-if="todo.dueDate" class="due-date" :class="getDueDateClass()">
-          <el-icon><Calendar /></el-icon>
-          {{ formatDate(todo.dueDate) }}
-        </span>
-      </div>
-    </div>
     <div class="todo-actions">
       <el-button text size="small" @click="emit('toggle-select')" :type="selected ? 'primary' : ''">
         <el-icon><Select /></el-icon>

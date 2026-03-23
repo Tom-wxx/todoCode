@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, inject, watch, type Ref } from 'vue'
 import { useTodoStore } from '../stores/todo'
-import { Plus, Delete, Select, CloseBold, CircleCheck } from '@element-plus/icons-vue'
+import { Plus, Delete, Select, CloseBold, CircleCheck, Document } from '@element-plus/icons-vue'
+import { ElMessageBox, ElMessage } from 'element-plus'
 import TodoItem from './TodoItem.vue'
 import TodoForm from './TodoForm.vue'
 import type { Todo } from '../utils/helpers'
@@ -36,6 +37,16 @@ function handleFormClose() {
   showForm.value = false
   editingTodo.value = null
 }
+
+async function handleBatchDelete() {
+  try {
+    await ElMessageBox.confirm(`确定删除选中的 ${todoStore.selectedIds.size} 条待办事项？`, '提示', { type: 'warning' })
+    await todoStore.batchDelete()
+    ElMessage.success('已批量删除')
+  } catch {
+    return
+  }
+}
 </script>
 
 <template>
@@ -49,7 +60,7 @@ function handleFormClose() {
       <el-button size="small" type="success" @click="todoStore.batchToggleComplete(true)">
         <el-icon><CircleCheck /></el-icon>批量完成
       </el-button>
-      <el-button size="small" type="danger" @click="todoStore.batchDelete()">
+      <el-button size="small" type="danger" @click="handleBatchDelete">
         <el-icon><Delete /></el-icon>批量删除
       </el-button>
       <el-button size="small" @click="todoStore.clearSelection()">

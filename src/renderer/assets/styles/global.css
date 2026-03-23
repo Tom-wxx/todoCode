@@ -76,6 +76,9 @@ html, body, #app {
   transform: translateY(10px);
   opacity: 0;
 }
+.slide-move {
+  transition: transform 0.25s ease;
+}
 
 ::selection {
   background: var(--accent);

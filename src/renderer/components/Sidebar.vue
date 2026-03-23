@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useTodoStore } from '../stores/todo'
 import { useSettingsStore } from '../stores/settings'
+import { CATEGORY_COLORS } from '../utils/constants'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const todoStore = useTodoStore()
@@ -9,10 +10,8 @@ const settingsStore = useSettingsStore()
 const newCategory = ref('')
 const showCategoryInput = ref(false)
 
-const categoryColors = ['#409eff', '#67c23a', '#e6a23c', '#f56c6c', '#909399', '#b37feb']
-
 function getCategoryColor(index: number) {
-  return categoryColors[index % categoryColors.length]
+  return CATEGORY_COLORS[index % CATEGORY_COLORS.length]
 }
 
 function setFilter(filter: string) {

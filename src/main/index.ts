@@ -84,7 +84,8 @@ function createWindow(): void {
     show: false,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false
+      sandbox: false,
+      contextIsolation: true
     }
   })
 
@@ -121,6 +122,7 @@ function setupReminderCheck(): void {
   reminderTimer = setInterval(() => {
     const todos = store.get('todos') as any[]
     const now = new Date()
+    let changed = false
     todos.forEach((todo: any) => {
       if (todo.reminder && !todo.completed && !todo.reminded) {
         const reminderTime = new Date(todo.reminder)
@@ -130,21 +132,28 @@ function setupReminderCheck(): void {
             body: todo.title
           }).show()
           todo.reminded = true
+          changed = true
           writeLog('INFO', `提醒触发: ${todo.title}`)
         }
       }
     })
-    store.set('todos', todos)
+    if (changed) {
+      store.set('todos', todos)
+    }
   }, 60000)
 }
 
 // IPC handlers
 function setupIPC(): void {
+  const ALLOWED_KEYS = ['todos', 'categories', 'settings']
+
   ipcMain.handle('store:get', (_event, key: string) => {
+    if (!ALLOWED_KEYS.includes(key)) return null
     return store.get(key)
   })
 
   ipcMain.handle('store:set', (_event, key: string, value: any) => {
+    if (!ALLOWED_KEYS.includes(key)) return
     store.set(key, value)
   })
 
@@ -258,7 +267,12 @@ function setupIPC(): void {
   })
 
   ipcMain.handle('config:openPath', (_event, path: string) => {
-    shell.openPath(path)
+    // 仅允许打开数据目录和日志目录
+    const allowedPaths = [getDataPath(), getLogPath(), app.getPath('userData')]
+    const isAllowed = allowedPaths.some(allowed => path.startsWith(allowed))
+    if (isAllowed) {
+      shell.openPath(path)
+    }
   })
 }
 

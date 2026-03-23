@@ -76,25 +76,27 @@ export const useTodoStore = defineStore('todo', () => {
 
   // 统计数据
   const stats = computed(() => {
-    const total = todos.value.length
-    const completed = todos.value.filter(t => t.completed).length
-    const todayCount = todos.value.filter(t => isToday(t.dueDate) && !t.completed).length
-    const overdueCount = todos.value.filter(t => isOverdue(t.dueDate) && !t.completed).length
-    const active = total - completed
-
-    // 按分类统计
+    let completed = 0
+    let todayCount = 0
+    let overdueCount = 0
     const byCategory: Record<string, number> = {}
-    todos.value.forEach(t => {
+    const byPriority = { high: 0, medium: 0, low: 0 }
+
+    for (const t of todos.value) {
+      if (t.completed) {
+        completed++
+      } else {
+        if (isToday(t.dueDate)) todayCount++
+        if (isOverdue(t.dueDate)) overdueCount++
+        byPriority[t.priority]++
+      }
       if (t.category) {
         byCategory[t.category] = (byCategory[t.category] || 0) + 1
       }
-    })
+    }
 
-    // 按优先级统计
-    const byPriority = { high: 0, medium: 0, low: 0 }
-    todos.value.filter(t => !t.completed).forEach(t => {
-      byPriority[t.priority]++
-    })
+    const total = todos.value.length
+    const active = total - completed
 
     // 近7天完成趋势
     const weekTrend: { date: string; count: number }[] = []

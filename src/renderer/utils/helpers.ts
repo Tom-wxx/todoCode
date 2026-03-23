@@ -1,37 +1,25 @@
-import { v4 as uuidv4 } from 'uuid'
-import dayjs from 'dayjs'
-import relativeTime from 'dayjs/plugin/relativeTime'
-import 'dayjs/locale/zh-cn'
-
-dayjs.extend(relativeTime)
-dayjs.locale('zh-cn')
-
 export function generateId(): string {
-  return uuidv4()
+  return crypto.randomUUID()
+}
+
+function localDateStr(): string {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
 export function formatDate(date: string | null): string {
   if (!date) return ''
-  return dayjs(date).format('YYYY-MM-DD')
-}
-
-export function formatDateTime(date: string | null): string {
-  if (!date) return ''
-  return dayjs(date).format('YYYY-MM-DD HH:mm')
-}
-
-export function getRelativeTime(date: string): string {
-  return dayjs(date).fromNow()
+  return date.slice(0, 10)
 }
 
 export function isOverdue(dueDate: string | null): boolean {
   if (!dueDate) return false
-  return dayjs(dueDate).isBefore(dayjs(), 'day')
+  return dueDate.slice(0, 10) < localDateStr()
 }
 
 export function isToday(dueDate: string | null): boolean {
   if (!dueDate) return false
-  return dayjs(dueDate).isSame(dayjs(), 'day')
+  return dueDate.slice(0, 10) === localDateStr()
 }
 
 export interface Todo {

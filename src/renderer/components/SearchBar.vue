@@ -1,11 +1,20 @@
 <script setup lang="ts">
-import { ref, inject, onMounted, type Ref } from 'vue'
+import { ref, watch, inject, onMounted, type Ref } from 'vue'
 import { useTodoStore } from '../stores/todo'
 import { Search } from '@element-plus/icons-vue'
 
 const todoStore = useTodoStore()
+const localQuery = ref(todoStore.searchQuery)
 const searchInputRef = ref<{ focus: () => void } | null>(null)
 const focusSearch = inject<Ref<(() => void) | null>>('focusSearch')
+
+let debounceTimer: ReturnType<typeof setTimeout> | null = null
+watch(localQuery, (val) => {
+  if (debounceTimer) clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(() => {
+    todoStore.searchQuery = val
+  }, 200)
+})
 
 onMounted(() => {
   if (focusSearch) {
@@ -20,7 +29,7 @@ onMounted(() => {
   <div class="search-bar">
     <el-input
       ref="searchInputRef"
-      v-model="todoStore.searchQuery"
+      v-model="localQuery"
       placeholder="搜索待办事项..."
       clearable
       size="default"
