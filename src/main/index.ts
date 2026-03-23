@@ -234,6 +234,7 @@ function setupIPC(): void {
   ipcMain.handle('config:setDataPath', async () => {
     const result = await dialog.showOpenDialog(mainWindow!, {
       title: '选择数据存储目录',
+      defaultPath: getDataPath(),
       properties: ['openDirectory', 'createDirectory']
     })
     if (!result.canceled && result.filePaths.length > 0) {
@@ -266,6 +267,7 @@ function setupIPC(): void {
   ipcMain.handle('config:setLogPath', async () => {
     const result = await dialog.showOpenDialog(mainWindow!, {
       title: '选择日志存储目录',
+      defaultPath: getLogPath(),
       properties: ['openDirectory', 'createDirectory']
     })
     if (!result.canceled && result.filePaths.length > 0) {
