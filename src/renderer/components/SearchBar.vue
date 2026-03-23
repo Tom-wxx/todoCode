@@ -49,8 +49,7 @@ onMounted(() => {
 .search-bar {
   display: flex;
   gap: 10px;
-  padding: 14px 20px;
-  background: var(--bg-primary);
+  padding: 12px 16px;
   border-bottom: 1px solid var(--border-color);
 }
 </style>
