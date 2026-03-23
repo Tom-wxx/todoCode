@@ -62,12 +62,12 @@ onUnmounted(() => {
       </div>
     </div>
     <div class="status-bar">
-      <span>共 {{ todoStore.stats.total }} 项</span>
-      <span>·</span>
-      <span>已完成 {{ todoStore.stats.completed }} 项</span>
-      <span>·</span>
-      <span>今日到期 {{ todoStore.stats.todayCount }} 项</span>
-      <span v-if="todoStore.stats.overdueCount > 0" style="color: var(--priority-high)">
+      <span style="color: var(--text-panel-muted)">共 {{ todoStore.stats.total }} 项</span>
+      <span style="color: var(--border-panel)">·</span>
+      <span style="color: var(--text-panel-muted)">已完成 {{ todoStore.stats.completed }} 项</span>
+      <span style="color: var(--border-panel)">·</span>
+      <span style="color: var(--text-panel-muted)">今日到期 {{ todoStore.stats.todayCount }} 项</span>
+      <span v-if="todoStore.stats.overdueCount > 0" style="color: #fca5a5">
         · 已过期 {{ todoStore.stats.overdueCount }} 项
       </span>
     </div>
@@ -101,10 +101,10 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 0 16px;
-  font-size: 12px;
+  padding: 0 20px;
+  font-size: 11px;
   color: var(--text-muted);
-  background: var(--bg-secondary);
-  border-top: 1px solid var(--border-color);
+  background: var(--bg-panel);
+  border-top: 1px solid var(--border-panel);
 }
 </style>

@@ -42,18 +42,13 @@ async function handleAddCategory() {
 async function handleRemoveCategory(name: string) {
   try {
     const count = todoStore.todos.filter(t => t.category === name).length
-    if (count > 0) {
-      await ElMessageBox.confirm(`分类「${name}」下还有 ${count} 条待办，确定删除？`, '提示', { type: 'warning' })
-    } else {
-      await ElMessageBox.confirm(`确定删除分类「${name}」？`, '提示', { type: 'warning' })
-    }
+    const msg = count > 0
+      ? `分类「${name}」下还有 ${count} 条待办，确定删除？`
+      : `确定删除分类「${name}」？`
+    await ElMessageBox.confirm(msg, '提示', { type: 'warning' })
     await settingsStore.removeCategory(name)
-    if (todoStore.currentFilter === name) {
-      todoStore.setFilter('all')
-    }
-  } catch {
-    return
-  }
+    if (todoStore.currentFilter === name) todoStore.setFilter('all')
+  } catch { return }
 }
 
 async function handleExport() {
@@ -63,11 +58,8 @@ async function handleExport() {
 
 async function handleImport() {
   const result = await todoStore.importTodos()
-  if (result) {
-    ElMessage.success('导入成功')
-  } else if (result === false) {
-    ElMessage.error('导入失败，请检查文件格式')
-  }
+  if (result) ElMessage.success('导入成功')
+  else if (result === false) ElMessage.error('导入失败，请检查文件格式')
 }
 
 async function handleClearCompleted() {
@@ -75,74 +67,48 @@ async function handleClearCompleted() {
     await ElMessageBox.confirm(`确定清空所有 ${todoStore.stats.completed} 条已完成待办？`, '提示', { type: 'warning' })
     await todoStore.clearCompleted()
     ElMessage.success('已清空已完成待办')
-  } catch {
-    return
-  }
+  } catch { return }
 }
 </script>
 
 <template>
   <div class="sidebar">
+    <!-- 智能列表 -->
     <div class="sidebar-section">
-      <div class="sidebar-title">智能列表</div>
-      <div
-        class="sidebar-item"
-        :class="{ active: todoStore.currentFilter === 'all' && !settingsStore.showStats && !settingsStore.showSettings }"
-        @click="setFilter('all')"
-      >
+      <div class="section-title">智能列表</div>
+      <div class="nav-item" :class="{ active: todoStore.currentFilter === 'all' && !settingsStore.showStats && !settingsStore.showSettings }" @click="setFilter('all')">
         <el-icon><List /></el-icon>
         <span>全部</span>
         <span class="badge">{{ todoStore.stats.total }}</span>
       </div>
-      <div
-        class="sidebar-item"
-        :class="{ active: todoStore.currentFilter === 'today' && !settingsStore.showStats && !settingsStore.showSettings }"
-        @click="setFilter('today')"
-      >
+      <div class="nav-item" :class="{ active: todoStore.currentFilter === 'today' && !settingsStore.showStats && !settingsStore.showSettings }" @click="setFilter('today')">
         <el-icon><Calendar /></el-icon>
         <span>今天</span>
         <span class="badge" v-if="todoStore.stats.todayCount">{{ todoStore.stats.todayCount }}</span>
       </div>
-      <div
-        class="sidebar-item"
-        :class="{ active: todoStore.currentFilter === 'overdue' && !settingsStore.showStats && !settingsStore.showSettings }"
-        @click="setFilter('overdue')"
-      >
+      <div class="nav-item" :class="{ active: todoStore.currentFilter === 'overdue' && !settingsStore.showStats && !settingsStore.showSettings }" @click="setFilter('overdue')">
         <el-icon><WarningFilled /></el-icon>
         <span>已过期</span>
-        <span class="badge overdue" v-if="todoStore.stats.overdueCount">{{ todoStore.stats.overdueCount }}</span>
+        <span class="badge danger" v-if="todoStore.stats.overdueCount">{{ todoStore.stats.overdueCount }}</span>
       </div>
-      <div
-        class="sidebar-item"
-        :class="{ active: todoStore.currentFilter === 'completed' && !settingsStore.showStats && !settingsStore.showSettings }"
-        @click="setFilter('completed')"
-      >
+      <div class="nav-item" :class="{ active: todoStore.currentFilter === 'completed' && !settingsStore.showStats && !settingsStore.showSettings }" @click="setFilter('completed')">
         <el-icon><CircleCheck /></el-icon>
         <span>已完成</span>
         <span class="badge">{{ todoStore.stats.completed }}</span>
-        <el-icon
-          v-if="todoStore.stats.completed > 0"
-          class="clear-icon"
-          @click.stop="handleClearCompleted"
-          title="清空已完成"
-        ><Brush /></el-icon>
+        <el-icon v-if="todoStore.stats.completed > 0" class="clear-btn" @click.stop="handleClearCompleted" title="清空已完成"><Brush /></el-icon>
       </div>
     </div>
 
-    <div class="sidebar-divider"></div>
+    <div class="divider"></div>
 
+    <!-- 分类 -->
     <div class="sidebar-section">
-      <div class="sidebar-title">
+      <div class="section-title">
         分类
-        <el-icon class="add-icon" @click="showCategoryInput = !showCategoryInput"><Plus /></el-icon>
+        <el-icon class="icon-btn" @click="showCategoryInput = !showCategoryInput"><Plus /></el-icon>
       </div>
       <div v-if="showCategoryInput" class="category-input">
-        <el-input
-          v-model="newCategory"
-          size="small"
-          placeholder="分类名称"
-          @keyup.enter="handleAddCategory"
-        >
+        <el-input v-model="newCategory" size="small" placeholder="分类名称" @keyup.enter="handleAddCategory">
           <template #append>
             <el-button @click="handleAddCategory"><el-icon><Check /></el-icon></el-button>
           </template>
@@ -151,7 +117,7 @@ async function handleClearCompleted() {
       <div
         v-for="(cat, index) in settingsStore.categories"
         :key="cat"
-        class="sidebar-item"
+        class="nav-item"
         :class="{ active: todoStore.currentFilter === cat && !settingsStore.showStats && !settingsStore.showSettings }"
         @click="setFilter(cat)"
         @contextmenu.prevent="handleRemoveCategory(cat)"
@@ -162,32 +128,21 @@ async function handleClearCompleted() {
       </div>
     </div>
 
-    <div class="sidebar-divider"></div>
+    <div class="divider"></div>
 
+    <!-- 工具 -->
     <div class="sidebar-section">
-      <div
-        class="sidebar-item"
-        :class="{ active: settingsStore.showStats }"
-        @click="showStatsPanel"
-      >
-        <el-icon><DataAnalysis /></el-icon>
-        <span>统计</span>
+      <div class="nav-item" :class="{ active: settingsStore.showStats }" @click="showStatsPanel">
+        <el-icon><DataAnalysis /></el-icon><span>统计</span>
       </div>
-      <div class="sidebar-item" @click="handleExport">
-        <el-icon><Upload /></el-icon>
-        <span>导出数据</span>
+      <div class="nav-item" @click="handleExport">
+        <el-icon><Upload /></el-icon><span>导出数据</span>
       </div>
-      <div class="sidebar-item" @click="handleImport">
-        <el-icon><Download /></el-icon>
-        <span>导入数据</span>
+      <div class="nav-item" @click="handleImport">
+        <el-icon><Download /></el-icon><span>导入数据</span>
       </div>
-      <div
-        class="sidebar-item"
-        :class="{ active: settingsStore.showSettings }"
-        @click="showSettingsPanel"
-      >
-        <el-icon><Setting /></el-icon>
-        <span>设置</span>
+      <div class="nav-item" :class="{ active: settingsStore.showSettings }" @click="showSettingsPanel">
+        <el-icon><Setting /></el-icon><span>设置</span>
       </div>
     </div>
   </div>
@@ -197,83 +152,84 @@ async function handleClearCompleted() {
 .sidebar {
   width: var(--sidebar-width);
   min-width: var(--sidebar-width);
-  background: var(--bg-sidebar);
-  border-right: 1px solid var(--border-color);
+  background: var(--bg-panel);
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  padding: 8px 0;
+  padding: 10px 0;
 }
 
 .sidebar-section {
-  padding: 4px 8px;
+  padding: 2px 10px;
 }
 
-.sidebar-title {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-muted);
+.section-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-panel-muted);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding: 8px 10px 4px;
+  letter-spacing: 0.8px;
+  padding: 10px 8px 5px;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.add-icon {
-  cursor: pointer;
-  font-size: 14px;
-  transition: color 0.15s;
-}
-.add-icon:hover {
-  color: var(--accent);
-}
-
-.sidebar-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  border-radius: 6px;
+.icon-btn {
   cursor: pointer;
   font-size: 13px;
-  color: var(--text-secondary);
-  transition: all 0.15s;
+  color: var(--text-panel-muted);
+  transition: color 0.15s;
+}
+.icon-btn:hover { color: rgba(255,255,255,0.8); }
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-panel);
+  transition: background 0.15s, color 0.15s;
 }
 
-.sidebar-item:hover {
-  background: rgba(128, 128, 128, 0.1);
+.nav-item:hover {
+  background: var(--bg-panel-hover);
+  color: rgba(255, 255, 255, 0.95);
 }
 
-.sidebar-item.active {
-  background: linear-gradient(135deg, #409eff, #53a8ff);
-  color: white;
+.nav-item.active {
+  background: var(--bg-panel-active);
+  color: #ffffff;
 }
 
-.sidebar-item.active .badge {
-  background: rgba(255, 255, 255, 0.25);
+.nav-item.active .badge {
+  background: rgba(255, 255, 255, 0.2);
   color: white;
 }
 
 .badge {
   margin-left: auto;
   font-size: 11px;
-  background: rgba(128, 128, 128, 0.15);
-  padding: 1px 6px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-panel-muted);
+  padding: 1px 7px;
   border-radius: 10px;
   min-width: 20px;
   text-align: center;
+  font-weight: 500;
 }
 
-.badge.overdue {
-  background: var(--priority-high);
-  color: white;
+.badge.danger {
+  background: rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
 }
 
-.sidebar-divider {
+.divider {
   height: 1px;
-  background: var(--border-color);
+  background: var(--border-panel);
   margin: 6px 16px;
 }
 
@@ -282,26 +238,20 @@ async function handleClearCompleted() {
 }
 
 .dot {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   flex-shrink: 0;
 }
 
-.clear-icon {
+.clear-btn {
   font-size: 12px;
   cursor: pointer;
-  margin-left: 4px;
+  margin-left: 2px;
   opacity: 0;
   transition: opacity 0.15s, color 0.15s;
-  color: var(--text-muted);
+  color: var(--text-panel-muted);
 }
-
-.clear-icon:hover {
-  color: var(--priority-high);
-}
-
-.sidebar-item:hover .clear-icon {
-  opacity: 1;
-}
+.clear-btn:hover { color: #fca5a5; }
+.nav-item:hover .clear-btn { opacity: 1; }
 </style>

@@ -95,7 +95,7 @@ async function handleDelete() {
   align-items: center;
   gap: 14px;
   padding: 14px 16px;
-  background: var(--bg-primary);
+  background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: 12px;
   margin-bottom: 8px;

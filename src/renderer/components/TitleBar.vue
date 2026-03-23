@@ -3,20 +3,19 @@ import { useSettingsStore } from '../stores/settings'
 import { getApi } from '../utils/api'
 
 const settingsStore = useSettingsStore()
-
 function minimize() { getApi().window.minimize() }
 function maximize() { getApi().window.maximize() }
 function close() { getApi().window.close() }
 </script>
 
 <template>
-  <div class="title-bar" :style="{ background: settingsStore.darkMode ? 'var(--bg-sidebar)' : 'linear-gradient(to right, #f0f2f5, #f8f9fb)' }">
+  <div class="title-bar">
     <div class="title-bar-drag">
       <el-icon class="title-icon"><Finished /></el-icon>
-      <span class="title-text">待办事项</span>
+      <span class="title-text">DailyToDo</span>
     </div>
     <div class="title-bar-actions">
-      <button class="theme-btn" @click="settingsStore.toggleDarkMode" :title="settingsStore.darkMode ? '浅色模式' : '深色模式'">
+      <button class="title-btn" @click="settingsStore.toggleDarkMode" :title="settingsStore.darkMode ? '浅色模式' : '深色模式'">
         <el-icon><Sunny v-if="settingsStore.darkMode" /><Moon v-else /></el-icon>
       </button>
       <button class="win-btn" @click="minimize"><span>&#x2014;</span></button>
@@ -29,30 +28,33 @@ function close() { getApi().window.close() }
 <style scoped>
 .title-bar {
   height: var(--titlebar-height);
+  background: var(--bg-panel);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-panel);
   -webkit-app-region: drag;
   user-select: none;
+  flex-shrink: 0;
 }
 
 .title-bar-drag {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding-left: 12px;
+  gap: 7px;
+  padding-left: 14px;
 }
 
 .title-icon {
-  font-size: 16px;
+  font-size: 15px;
   color: var(--accent);
 }
 
 .title-text {
   font-size: 13px;
-  font-weight: 500;
-  color: var(--text-primary);
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  letter-spacing: 0.2px;
 }
 
 .title-bar-actions {
@@ -60,22 +62,23 @@ function close() { getApi().window.close() }
   -webkit-app-region: no-drag;
 }
 
-.theme-btn, .win-btn {
-  width: 40px;
+.title-btn, .win-btn {
+  width: 38px;
   height: var(--titlebar-height);
   border: none;
   background: transparent;
-  color: var(--text-secondary);
-  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.15s;
+  transition: background 0.15s, color 0.15s;
 }
 
-.theme-btn:hover, .win-btn:hover {
-  background: rgba(128, 128, 128, 0.15);
+.title-btn:hover, .win-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .close-btn:hover {
