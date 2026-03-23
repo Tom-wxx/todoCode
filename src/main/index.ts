@@ -53,20 +53,25 @@ function writeLog(level: string, message: string) {
 }
 
 // 使用自定义路径创建数据 store
+const DATA_STORE_DEFAULTS = {
+  todos: [],
+  categories: ['工作', '学习', '生活'],
+  settings: { darkMode: false }
+}
+
 function createDataStore() {
-  const dataPath = getDataPath()
-  ensureDir(dataPath)
-  return new Store({
-    cwd: dataPath,
-    name: 'todo-data',
-    defaults: {
-      todos: [],
-      categories: ['工作', '学习', '生活'],
-      settings: {
-        darkMode: false
-      }
-    }
-  })
+  try {
+    const dataPath = getDataPath()
+    ensureDir(dataPath)
+    return new Store({ cwd: dataPath, name: 'todo-data', defaults: DATA_STORE_DEFAULTS })
+  } catch (_e) {
+    // 自定义路径不可用，重置为默认路径
+    configStore.set('dataPath', '')
+    const fallbackPath = app.getPath('userData')
+    ensureDir(fallbackPath)
+    writeLog('WARN', `自定义数据路径不可用，已回退到默认路径: ${fallbackPath}`)
+    return new Store({ cwd: fallbackPath, name: 'todo-data', defaults: DATA_STORE_DEFAULTS })
+  }
 }
 
 let store = createDataStore()
@@ -217,17 +222,16 @@ function setupIPC(): void {
     })
     if (!result.canceled && result.filePaths.length > 0) {
       const newPath = result.filePaths[0]
-      // 迁移旧数据到新路径
-      const oldData = {
-        todos: store.get('todos'),
-        categories: store.get('categories'),
-        settings: store.get('settings')
-      }
       configStore.set('dataPath', newPath)
-      store = createDataStore()
-      store.set('todos', oldData.todos)
-      store.set('categories', oldData.categories)
-      store.set('settings', oldData.settings)
+      const newStore = new Store({ cwd: newPath, name: 'todo-data', defaults: DATA_STORE_DEFAULTS })
+      // 目标目录没有已有数据文件时，将当前数据迁移过去
+      const existingFile = join(newPath, 'todo-data.json')
+      if (!fs.existsSync(existingFile)) {
+        newStore.set('todos', store.get('todos'))
+        newStore.set('categories', store.get('categories'))
+        newStore.set('settings', store.get('settings'))
+      }
+      store = newStore
       writeLog('INFO', `数据路径已更改为: ${newPath}`)
       return newPath
     }
