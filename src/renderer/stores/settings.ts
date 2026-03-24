@@ -7,6 +7,7 @@ export const useSettingsStore = defineStore('settings', () => {
   const categories = ref<string[]>(['工作', '学习', '生活'])
   const showStats = ref(false)
   const showSettings = ref(false)
+  const showCalendar = ref(false)
 
   async function load() {
     const api = getApi()
@@ -47,5 +48,5 @@ export const useSettingsStore = defineStore('settings', () => {
     await getApi().store.set('categories', [...categories.value])
   }
 
-  return { darkMode, categories, showStats, showSettings, load, toggleDarkMode, addCategory, removeCategory }
+  return { darkMode, categories, showStats, showSettings, showCalendar, load, toggleDarkMode, addCategory, removeCategory }
 })

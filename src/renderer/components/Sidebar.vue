@@ -17,17 +17,26 @@ function getCategoryColor(index: number) {
 function setFilter(filter: string) {
   settingsStore.showStats = false
   settingsStore.showSettings = false
+  settingsStore.showCalendar = false
   todoStore.setFilter(filter)
+}
+
+function showCalendarPanel() {
+  settingsStore.showCalendar = true
+  settingsStore.showStats = false
+  settingsStore.showSettings = false
 }
 
 function showStatsPanel() {
   settingsStore.showStats = true
   settingsStore.showSettings = false
+  settingsStore.showCalendar = false
 }
 
 function showSettingsPanel() {
   settingsStore.showSettings = true
   settingsStore.showStats = false
+  settingsStore.showCalendar = false
 }
 
 async function handleAddCategory() {
@@ -93,7 +102,7 @@ async function handleClearCompleted() {
     <div class="sidebar-section">
       <div
         class="sidebar-item"
-        :class="{ active: todoStore.currentFilter === 'all' && !settingsStore.showStats && !settingsStore.showSettings }"
+        :class="{ active: todoStore.currentFilter === 'all' && !settingsStore.showStats && !settingsStore.showSettings && !settingsStore.showCalendar }"
         @click="setFilter('all')"
       >
         <span class="sidebar-icon">
@@ -104,18 +113,18 @@ async function handleClearCompleted() {
       </div>
       <div
         class="sidebar-item"
-        :class="{ active: todoStore.currentFilter === 'today' && !settingsStore.showStats && !settingsStore.showSettings }"
-        @click="setFilter('today')"
+        :class="{ active: settingsStore.showCalendar }"
+        @click="showCalendarPanel"
       >
         <span class="sidebar-icon">
           <el-icon><Calendar /></el-icon>
         </span>
-        <span class="sidebar-label">今天</span>
+        <span class="sidebar-label">日程日历</span>
         <span class="badge" v-if="todoStore.stats.todayCount">{{ todoStore.stats.todayCount }}</span>
       </div>
       <div
         class="sidebar-item"
-        :class="{ active: todoStore.currentFilter === 'overdue' && !settingsStore.showStats && !settingsStore.showSettings }"
+        :class="{ active: todoStore.currentFilter === 'overdue' && !settingsStore.showStats && !settingsStore.showSettings && !settingsStore.showCalendar }"
         @click="setFilter('overdue')"
       >
         <span class="sidebar-icon">
@@ -126,7 +135,7 @@ async function handleClearCompleted() {
       </div>
       <div
         class="sidebar-item"
-        :class="{ active: todoStore.currentFilter === 'completed' && !settingsStore.showStats && !settingsStore.showSettings }"
+        :class="{ active: todoStore.currentFilter === 'completed' && !settingsStore.showStats && !settingsStore.showSettings && !settingsStore.showCalendar }"
         @click="setFilter('completed')"
       >
         <span class="sidebar-icon">
@@ -169,7 +178,7 @@ async function handleClearCompleted() {
         v-for="(cat, index) in settingsStore.categories"
         :key="cat"
         class="sidebar-item"
-        :class="{ active: todoStore.currentFilter === cat && !settingsStore.showStats && !settingsStore.showSettings }"
+        :class="{ active: todoStore.currentFilter === cat && !settingsStore.showStats && !settingsStore.showSettings && !settingsStore.showCalendar }"
         @click="setFilter(cat)"
         @contextmenu.prevent="handleRemoveCategory(cat)"
       >

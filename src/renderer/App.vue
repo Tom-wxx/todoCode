@@ -8,6 +8,7 @@ import SearchBar from './components/SearchBar.vue'
 import TodoList from './components/TodoList.vue'
 import StatsPanel from './components/StatsPanel.vue'
 import SettingsPanel from './components/SettingsPanel.vue'
+import CalendarView from './components/CalendarView.vue'
 
 const todoStore = useTodoStore()
 const settingsStore = useSettingsStore()
@@ -64,6 +65,9 @@ onUnmounted(() => {
         </template>
         <template v-else-if="settingsStore.showStats">
           <StatsPanel />
+        </template>
+        <template v-else-if="settingsStore.showCalendar">
+          <CalendarView />
         </template>
         <template v-else>
           <!-- 欢迎区 -->
