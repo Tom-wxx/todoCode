@@ -83,15 +83,23 @@ async function handleClearCompleted() {
 
 <template>
   <div class="sidebar">
+    <!-- 头部 -->
+    <div class="sidebar-header">
+      <div class="sidebar-header-title">任务空间</div>
+      <div class="sidebar-header-sub">专注每一天</div>
+    </div>
+
+    <!-- 智能列表 -->
     <div class="sidebar-section">
-      <div class="sidebar-title">智能列表</div>
       <div
         class="sidebar-item"
         :class="{ active: todoStore.currentFilter === 'all' && !settingsStore.showStats && !settingsStore.showSettings }"
         @click="setFilter('all')"
       >
-        <el-icon><List /></el-icon>
-        <span>全部</span>
+        <span class="sidebar-icon">
+          <el-icon><List /></el-icon>
+        </span>
+        <span class="sidebar-label">全部任务</span>
         <span class="badge">{{ todoStore.stats.total }}</span>
       </div>
       <div
@@ -99,8 +107,10 @@ async function handleClearCompleted() {
         :class="{ active: todoStore.currentFilter === 'today' && !settingsStore.showStats && !settingsStore.showSettings }"
         @click="setFilter('today')"
       >
-        <el-icon><Calendar /></el-icon>
-        <span>今天</span>
+        <span class="sidebar-icon">
+          <el-icon><Calendar /></el-icon>
+        </span>
+        <span class="sidebar-label">今天</span>
         <span class="badge" v-if="todoStore.stats.todayCount">{{ todoStore.stats.todayCount }}</span>
       </div>
       <div
@@ -108,8 +118,10 @@ async function handleClearCompleted() {
         :class="{ active: todoStore.currentFilter === 'overdue' && !settingsStore.showStats && !settingsStore.showSettings }"
         @click="setFilter('overdue')"
       >
-        <el-icon><WarningFilled /></el-icon>
-        <span>已过期</span>
+        <span class="sidebar-icon">
+          <el-icon><WarningFilled /></el-icon>
+        </span>
+        <span class="sidebar-label">已逾期</span>
         <span class="badge overdue" v-if="todoStore.stats.overdueCount">{{ todoStore.stats.overdueCount }}</span>
       </div>
       <div
@@ -117,24 +129,29 @@ async function handleClearCompleted() {
         :class="{ active: todoStore.currentFilter === 'completed' && !settingsStore.showStats && !settingsStore.showSettings }"
         @click="setFilter('completed')"
       >
-        <el-icon><CircleCheck /></el-icon>
-        <span>已完成</span>
+        <span class="sidebar-icon">
+          <el-icon><CircleCheck /></el-icon>
+        </span>
+        <span class="sidebar-label">已完成</span>
         <span class="badge">{{ todoStore.stats.completed }}</span>
-        <el-icon
+        <span
           v-if="todoStore.stats.completed > 0"
-          class="clear-icon"
+          class="clear-action"
           @click.stop="handleClearCompleted"
           title="清空已完成"
-        ><Brush /></el-icon>
+        >
+          <el-icon :size="13"><Brush /></el-icon>
+        </span>
       </div>
     </div>
 
-    <div class="sidebar-divider"></div>
-
+    <!-- 分类 -->
     <div class="sidebar-section">
-      <div class="sidebar-title">
-        分类
-        <el-icon class="add-icon" @click="showCategoryInput = !showCategoryInput"><Plus /></el-icon>
+      <div class="section-header">
+        <span class="section-title">分类</span>
+        <span class="section-action" @click="showCategoryInput = !showCategoryInput">
+          <el-icon :size="14"><Plus /></el-icon>
+        </span>
       </div>
       <div v-if="showCategoryInput" class="category-input">
         <el-input
@@ -156,38 +173,37 @@ async function handleClearCompleted() {
         @click="setFilter(cat)"
         @contextmenu.prevent="handleRemoveCategory(cat)"
       >
-        <span class="dot" :style="{ background: getCategoryColor(index) }"></span>
-        <span>{{ cat }}</span>
+        <span class="cat-dot" :style="{ background: getCategoryColor(index) }"></span>
+        <span class="sidebar-label">{{ cat }}</span>
         <span class="badge">{{ todoStore.stats.byCategory[cat] || 0 }}</span>
       </div>
     </div>
 
-    <div class="sidebar-divider"></div>
-
-    <div class="sidebar-section">
+    <!-- 底部 -->
+    <div class="sidebar-footer">
       <div
         class="sidebar-item"
         :class="{ active: settingsStore.showStats }"
         @click="showStatsPanel"
       >
-        <el-icon><DataAnalysis /></el-icon>
-        <span>统计</span>
+        <span class="sidebar-icon"><el-icon><DataAnalysis /></el-icon></span>
+        <span class="sidebar-label">统计分析</span>
       </div>
       <div class="sidebar-item" @click="handleExport">
-        <el-icon><Upload /></el-icon>
-        <span>导出数据</span>
+        <span class="sidebar-icon"><el-icon><Upload /></el-icon></span>
+        <span class="sidebar-label">数据导出</span>
       </div>
       <div class="sidebar-item" @click="handleImport">
-        <el-icon><Download /></el-icon>
-        <span>导入数据</span>
+        <span class="sidebar-icon"><el-icon><Download /></el-icon></span>
+        <span class="sidebar-label">导入数据</span>
       </div>
       <div
         class="sidebar-item"
         :class="{ active: settingsStore.showSettings }"
         @click="showSettingsPanel"
       >
-        <el-icon><Setting /></el-icon>
-        <span>设置</span>
+        <span class="sidebar-icon"><el-icon><Setting /></el-icon></span>
+        <span class="sidebar-label">设置</span>
       </div>
     </div>
   </div>
@@ -198,72 +214,126 @@ async function handleClearCompleted() {
   width: var(--sidebar-width);
   min-width: var(--sidebar-width);
   background: var(--bg-sidebar);
-  border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  padding: 8px 0;
+  padding: 0 12px 12px;
 }
 
+/* 头部 */
+.sidebar-header {
+  padding: 16px 12px 20px;
+}
+
+.sidebar-header-title {
+  font-family: 'Manrope', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
+}
+
+.sidebar-header-sub {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  letter-spacing: 0.2px;
+}
+
+/* 区块 */
 .sidebar-section {
-  padding: 4px 8px;
+  margin-bottom: 20px;
 }
 
-.sidebar-title {
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 12px 8px;
+}
+
+.section-title {
+  font-family: 'Inter', sans-serif;
   font-size: 11px;
   font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding: 8px 10px 4px;
+  letter-spacing: 0.8px;
+}
+
+.section-action {
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: color 0.2s;
   display: flex;
-  justify-content: space-between;
   align-items: center;
 }
 
-.add-icon {
-  cursor: pointer;
-  font-size: 14px;
-  transition: color 0.15s;
-}
-.add-icon:hover {
+.section-action:hover {
   color: var(--accent);
 }
 
+/* 列表项 */
 .sidebar-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  border-radius: 6px;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 13px;
+  font-weight: 500;
   color: var(--text-secondary);
-  transition: all 0.15s;
+  transition: all 0.2s ease;
+  margin-bottom: 2px;
 }
 
 .sidebar-item:hover {
-  background: rgba(128, 128, 128, 0.1);
+  background: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 .sidebar-item.active {
-  background: linear-gradient(135deg, #409eff, #53a8ff);
+  background: var(--accent);
   color: white;
 }
 
 .sidebar-item.active .badge {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.2);
   color: white;
 }
 
+.sidebar-item.active .sidebar-icon {
+  color: white;
+}
+
+.sidebar-icon {
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+  color: var(--text-muted);
+  transition: color 0.2s;
+}
+
+.sidebar-item:hover .sidebar-icon {
+  color: var(--text-primary);
+}
+
+.sidebar-label {
+  flex: 1;
+}
+
 .badge {
-  margin-left: auto;
+  font-family: 'Inter', sans-serif;
   font-size: 11px;
-  background: rgba(128, 128, 128, 0.15);
-  padding: 1px 6px;
+  font-weight: 600;
+  background: rgba(115, 119, 121, 0.1);
+  padding: 2px 8px;
   border-radius: 10px;
-  min-width: 20px;
+  min-width: 22px;
   text-align: center;
+  line-height: 1.4;
 }
 
 .badge.overdue {
@@ -271,37 +341,40 @@ async function handleClearCompleted() {
   color: white;
 }
 
-.sidebar-divider {
-  height: 1px;
-  background: var(--border-color);
-  margin: 6px 16px;
-}
-
-.category-input {
-  padding: 4px 4px 8px;
-}
-
-.dot {
-  width: 8px;
-  height: 8px;
+/* 分类圆点 */
+.cat-dot {
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   flex-shrink: 0;
 }
 
-.clear-icon {
-  font-size: 12px;
-  cursor: pointer;
-  margin-left: 4px;
-  opacity: 0;
-  transition: opacity 0.15s, color 0.15s;
-  color: var(--text-muted);
+/* 分类输入 */
+.category-input {
+  padding: 4px 8px 8px;
 }
 
-.clear-icon:hover {
+/* 清空按钮 */
+.clear-action {
+  display: flex;
+  align-items: center;
+  color: var(--text-muted);
+  opacity: 0;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.clear-action:hover {
   color: var(--priority-high);
 }
 
-.sidebar-item:hover .clear-icon {
+.sidebar-item:hover .clear-action {
   opacity: 1;
+}
+
+/* 底部 */
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 12px;
 }
 </style>

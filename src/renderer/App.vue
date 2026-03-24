@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, provide } from 'vue'
+import { onMounted, onUnmounted, ref, provide, computed } from 'vue'
 import { useTodoStore } from './stores/todo'
 import { useSettingsStore } from './stores/settings'
 import TitleBar from './components/TitleBar.vue'
@@ -18,6 +18,16 @@ const focusSearch = ref<(() => void) | null>(null)
 
 provide('showAddForm', showAddForm)
 provide('focusSearch', focusSearch)
+
+// 问候语
+const greeting = computed(() => {
+  const h = new Date().getHours()
+  if (h < 6) return '夜深了'
+  if (h < 12) return '早上好'
+  if (h < 14) return '中午好'
+  if (h < 18) return '下午好'
+  return '晚上好'
+})
 
 function handleKeydown(e: KeyboardEvent) {
   if (e.ctrlKey && e.key === 'n') {
@@ -56,20 +66,17 @@ onUnmounted(() => {
           <StatsPanel />
         </template>
         <template v-else>
+          <!-- 欢迎区 -->
+          <div class="welcome-section">
+            <div class="welcome-text">
+              <h1 class="welcome-title">{{ greeting }}, 专注者</h1>
+              <p class="welcome-sub">今天共有 {{ todoStore.stats.todayCount }} 项待办任务等待处理</p>
+            </div>
+          </div>
           <SearchBar />
           <TodoList />
         </template>
       </div>
-    </div>
-    <div class="status-bar">
-      <span>共 {{ todoStore.stats.total }} 项</span>
-      <span>·</span>
-      <span>已完成 {{ todoStore.stats.completed }} 项</span>
-      <span>·</span>
-      <span>今日到期 {{ todoStore.stats.todayCount }} 项</span>
-      <span v-if="todoStore.stats.overdueCount > 0" style="color: var(--priority-high)">
-        · 已过期 {{ todoStore.stats.overdueCount }} 项
-      </span>
     </div>
   </div>
 </template>
@@ -96,15 +103,25 @@ onUnmounted(() => {
   background: var(--bg-primary);
 }
 
-.status-bar {
-  height: var(--statusbar-height);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0 16px;
-  font-size: 12px;
+/* 欢迎区 */
+.welcome-section {
+  padding: 28px 28px 8px;
+}
+
+.welcome-title {
+  font-family: 'Manrope', sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+  line-height: 1.3;
+}
+
+.welcome-sub {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
   color: var(--text-muted);
-  background: var(--bg-secondary);
-  border-top: 1px solid var(--border-color);
+  margin-top: 4px;
+  line-height: 1.6;
 }
 </style>

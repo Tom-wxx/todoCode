@@ -10,14 +10,25 @@ function close() { getApi().window.close() }
 </script>
 
 <template>
-  <div class="title-bar" :style="{ background: settingsStore.darkMode ? 'var(--bg-sidebar)' : 'linear-gradient(to right, #f0f2f5, #f8f9fb)' }">
+  <div class="title-bar">
     <div class="title-bar-drag">
-      <el-icon class="title-icon"><Finished /></el-icon>
-      <span class="title-text">待办事项</span>
+      <span class="brand-name">数字静修所</span>
+    </div>
+    <div class="title-bar-center">
+      <button
+        class="nav-tab"
+        :class="{ active: !settingsStore.showStats && !settingsStore.showSettings }"
+        @click="settingsStore.showStats = false; settingsStore.showSettings = false"
+      >工作台</button>
+      <button
+        class="nav-tab"
+        :class="{ active: settingsStore.showStats }"
+        @click="settingsStore.showStats = true; settingsStore.showSettings = false"
+      >数据统计</button>
     </div>
     <div class="title-bar-actions">
-      <button class="theme-btn" @click="settingsStore.toggleDarkMode" :title="settingsStore.darkMode ? '浅色模式' : '深色模式'">
-        <el-icon><Sunny v-if="settingsStore.darkMode" /><Moon v-else /></el-icon>
+      <button class="action-btn theme-btn" @click="settingsStore.toggleDarkMode" :title="settingsStore.darkMode ? '浅色模式' : '深色模式'">
+        <el-icon :size="16"><Sunny v-if="settingsStore.darkMode" /><Moon v-else /></el-icon>
       </button>
       <button class="win-btn" @click="minimize"><span>&#x2014;</span></button>
       <button class="win-btn" @click="maximize"><span>&#9633;</span></button>
@@ -32,54 +43,105 @@ function close() { getApi().window.close() }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-sidebar);
   -webkit-app-region: drag;
   user-select: none;
+  padding: 0 4px;
 }
 
 .title-bar-drag {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding-left: 12px;
+  padding-left: 14px;
+  min-width: var(--sidebar-width);
 }
 
-.title-icon {
-  font-size: 16px;
+.brand-name {
+  font-family: 'Manrope', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
   color: var(--accent);
+  letter-spacing: -0.3px;
 }
 
-.title-text {
+.title-bar-center {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  -webkit-app-region: no-drag;
+}
+
+.nav-tab {
+  padding: 6px 16px;
+  border: none;
+  background: transparent;
+  font-family: 'Manrope', sans-serif;
   font-size: 13px;
   font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  letter-spacing: -0.2px;
+}
+
+.nav-tab:hover {
   color: var(--text-primary);
+  background: var(--border-color);
+}
+
+.nav-tab.active {
+  color: var(--accent);
+  font-weight: 600;
 }
 
 .title-bar-actions {
   display: flex;
+  align-items: center;
   -webkit-app-region: no-drag;
 }
 
-.theme-btn, .win-btn {
-  width: 40px;
-  height: var(--titlebar-height);
+.action-btn {
+  width: 36px;
+  height: 36px;
   border: none;
   background: transparent;
-  color: var(--text-secondary);
-  font-size: 13px;
+  color: var(--text-muted);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.15s;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  margin-right: 4px;
 }
 
-.theme-btn:hover, .win-btn:hover {
-  background: rgba(128, 128, 128, 0.15);
+.action-btn:hover {
+  background: var(--border-color);
+  color: var(--text-primary);
+}
+
+.win-btn {
+  width: 40px;
+  height: var(--titlebar-height);
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.win-btn:hover {
+  background: rgba(115, 119, 121, 0.1);
+  color: var(--text-primary);
 }
 
 .close-btn:hover {
-  background: #e81123;
+  background: #b31b25;
   color: white;
 }
 </style>

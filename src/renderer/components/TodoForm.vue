@@ -82,9 +82,10 @@ async function handleSubmit() {
   <el-dialog
     :model-value="visible"
     :title="todo ? '编辑待办' : '添加待办'"
-    width="500px"
+    width="520px"
     @close="emit('close')"
     :close-on-click-modal="false"
+    class="todo-dialog"
   >
     <el-form :model="form" label-width="70px" label-position="left">
       <el-form-item label="标题">
@@ -152,8 +153,8 @@ async function handleSubmit() {
       </el-form-item>
     </el-form>
     <template #footer>
-      <el-button @click="emit('close')">取消</el-button>
-      <el-button type="primary" @click="handleSubmit">{{ todo ? '保存' : '添加' }}</el-button>
+      <button class="dialog-btn cancel" @click="emit('close')">取消</button>
+      <button class="dialog-btn primary" @click="handleSubmit">{{ todo ? '保存' : '添加' }}</button>
     </template>
   </el-dialog>
 </template>
@@ -169,14 +170,16 @@ async function handleSubmit() {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 14px;
-  border-radius: 20px;
-  border: 1.5px solid var(--border-color);
+  padding: 7px 16px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border-color-hover);
   background: transparent;
+  font-family: 'Manrope', sans-serif;
   font-size: 13px;
+  font-weight: 500;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.18s;
+  transition: all 0.2s;
   outline: none;
 }
 
@@ -185,8 +188,8 @@ async function handleSubmit() {
 }
 
 .priority-dot {
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
 }
@@ -197,7 +200,7 @@ async function handleSubmit() {
 .priority-btn--high.active {
   color: var(--priority-high);
   border-color: var(--priority-high);
-  background: rgba(245, 108, 108, 0.08);
+  background: rgba(179, 27, 37, 0.06);
 }
 
 /* 中 */
@@ -206,7 +209,7 @@ async function handleSubmit() {
 .priority-btn--medium.active {
   color: var(--priority-medium);
   border-color: var(--priority-medium);
-  background: rgba(230, 162, 60, 0.08);
+  background: rgba(230, 162, 60, 0.06);
 }
 
 /* 低 */
@@ -215,7 +218,7 @@ async function handleSubmit() {
 .priority-btn--low.active {
   color: var(--priority-low);
   border-color: var(--priority-low);
-  background: rgba(103, 194, 58, 0.08);
+  background: rgba(0, 100, 121, 0.06);
 }
 
 /* ===== 标签输入区 ===== */
@@ -225,29 +228,30 @@ async function handleSubmit() {
   align-items: center;
   gap: 6px;
   width: 100%;
-  min-height: 36px;
-  padding: 5px 10px;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  background: var(--bg-primary);
+  min-height: 38px;
+  padding: 5px 12px;
+  border: 1px solid var(--border-color-hover);
+  border-radius: 8px;
+  background: var(--surface-container-lowest);
   transition: border-color 0.2s;
   cursor: text;
 }
 
 .tag-input-box:focus-within {
   border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(0, 96, 148, 0.08);
 }
 
 .tag-chip {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 8px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
+  padding: 2px 10px;
+  background: rgba(0, 100, 121, 0.08);
   border-radius: 12px;
+  font-family: 'Inter', sans-serif;
   font-size: 12px;
-  color: var(--text-secondary);
+  color: var(--tertiary);
   line-height: 1.6;
 }
 
@@ -256,7 +260,7 @@ async function handleSubmit() {
   line-height: 1;
   color: var(--text-muted);
   cursor: pointer;
-  transition: color 0.15s;
+  transition: color 0.2s;
 }
 
 .tag-remove:hover {
@@ -269,6 +273,7 @@ async function handleSubmit() {
   border: none;
   outline: none;
   background: transparent;
+  font-family: 'Manrope', sans-serif;
   font-size: 13px;
   color: var(--text-primary);
   padding: 0;
@@ -276,5 +281,37 @@ async function handleSubmit() {
 
 .tag-input::placeholder {
   color: var(--text-muted);
+}
+
+/* ===== 对话框按钮 ===== */
+.dialog-btn {
+  padding: 9px 22px;
+  border-radius: 8px;
+  font-family: 'Manrope', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  margin-left: 8px;
+}
+
+.dialog-btn.cancel {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+}
+
+.dialog-btn.cancel:hover {
+  background: var(--surface-container);
+}
+
+.dialog-btn.primary {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.dialog-btn.primary:hover {
+  background: var(--accent-dim);
+  box-shadow: 0 4px 16px rgba(0, 96, 148, 0.2);
 }
 </style>

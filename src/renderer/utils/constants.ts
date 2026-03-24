@@ -17,9 +17,9 @@ export const PRIORITY_LABELS_FULL: Record<string, string> = {
 }
 
 export const PRIORITY_HEX_COLORS: Record<string, string> = {
-  high: '#f56c6c',
+  high: '#b31b25',
   medium: '#e6a23c',
-  low: '#67c23a'
+  low: '#006479'
 }
 
-export const CATEGORY_COLORS = ['#409eff', '#67c23a', '#e6a23c', '#f56c6c', '#909399', '#b37feb']
+export const CATEGORY_COLORS = ['#006094', '#006479', '#e6a23c', '#b31b25', '#495f69', '#67bafd']

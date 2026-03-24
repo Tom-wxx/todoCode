@@ -1,29 +1,70 @@
+/* ===== 数字静修所 设计系统 ===== */
+
 :root {
-  --sidebar-width: 220px;
-  --titlebar-height: 36px;
-  --statusbar-height: 32px;
-  --bg-primary: #ffffff;
-  --bg-secondary: #f5f7fa;
-  --bg-sidebar: #f0f2f5;
-  --text-primary: #303133;
-  --text-secondary: #606266;
-  --text-muted: #909399;
-  --border-color: #e4e7ed;
-  --priority-high: #f56c6c;
+  --sidebar-width: 240px;
+  --titlebar-height: 48px;
+
+  /* Surface 层级 */
+  --bg-primary: #f4f7f9;
+  --bg-secondary: #edf1f3;
+  --bg-sidebar: #ffffff;
+  --surface-container: #e4e9eb;
+  --surface-container-high: #dee3e6;
+  --surface-container-lowest: #ffffff;
+
+  /* 文字 */
+  --text-primary: #2b2f31;
+  --text-secondary: #585c5e;
+  --text-muted: #737779;
+
+  /* 边框 - 幽灵边框 */
+  --border-color: rgba(170, 174, 176, 0.15);
+  --border-color-hover: rgba(170, 174, 176, 0.3);
+
+  /* 主色 */
+  --accent: #006094;
+  --accent-dim: #005482;
+  --accent-light: #67bafd;
+  --accent-container: #67bafd;
+  --on-accent: #ebf3ff;
+
+  /* 辅色 */
+  --tertiary: #006479;
+  --tertiary-container: #40cef3;
+  --secondary: #495f69;
+  --secondary-container: #cfe6f2;
+
+  /* 语义色 */
+  --priority-high: #b31b25;
+  --priority-high-container: #fb5151;
   --priority-medium: #e6a23c;
-  --priority-low: #67c23a;
-  --accent: #409eff;
+  --priority-low: #006479;
+
+  /* 反色 */
+  --inverse-surface: #0b0f10;
+  --inverse-on-surface: #9a9d9f;
+  --inverse-primary: #67bafd;
 }
 
 html.dark {
-  --bg-primary: #1a1a2e;
+  --bg-primary: #0b0f10;
   --bg-secondary: #16213e;
   --bg-sidebar: #0f1629;
-  --text-primary: #e0e0e0;
-  --text-secondary: #a0a0a0;
-  --text-muted: #6b6b6b;
-  --border-color: #2a2a4a;
-  --accent: #409eff;
+  --surface-container: #1a2035;
+  --surface-container-high: #1e2540;
+  --surface-container-lowest: #080c0d;
+
+  --text-primary: #d8dee1;
+  --text-secondary: #9a9d9f;
+  --text-muted: #6b6e70;
+
+  --border-color: rgba(170, 174, 176, 0.08);
+  --border-color-hover: rgba(170, 174, 176, 0.15);
+
+  --accent: #67bafd;
+  --accent-dim: #58acef;
+  --accent-light: #67bafd;
+  --on-accent: #003655;
 }
 
 * {
@@ -36,13 +77,17 @@ html, body, #app {
   height: 100%;
   width: 100%;
   overflow: hidden;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+  font-family: 'Manrope', 'Inter', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, sans-serif;
   background: var(--bg-primary);
   color: var(--text-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
+/* 滚动条 */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -50,14 +95,21 @@ html, body, #app {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--text-muted);
+  background: var(--border-color-hover);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-secondary);
+  background: var(--text-muted);
 }
 
+/* 选区 */
+::selection {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* 过渡动画 */
 .fade-enter-active, .fade-leave-active {
   transition: opacity 0.2s ease;
 }
@@ -66,33 +118,60 @@ html, body, #app {
 }
 
 .slide-enter-active, .slide-leave-active {
-  transition: transform 0.25s ease, opacity 0.25s ease;
+  transition: transform 0.2s ease, opacity 0.2s ease;
 }
 .slide-enter-from {
-  transform: translateY(-10px);
+  transform: translateY(-8px);
   opacity: 0;
 }
 .slide-leave-to {
-  transform: translateY(10px);
+  transform: translateY(8px);
   opacity: 0;
 }
 .slide-move {
-  transition: transform 0.25s ease;
-}
-
-::selection {
-  background: var(--accent);
-  color: #fff;
+  transition: transform 0.2s ease;
 }
 
 .list-enter-active, .list-leave-active {
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
 }
 .list-enter-from {
   opacity: 0;
-  transform: translateX(-20px);
+  transform: translateX(-16px);
 }
 .list-leave-to {
   opacity: 0;
-  transform: translateX(20px);
+  transform: translateX(16px);
+}
+
+/* ===== Element Plus 主题覆盖 ===== */
+:root {
+  --el-color-primary: #006094;
+  --el-color-primary-light-3: #3389b5;
+  --el-color-primary-light-5: #67bafd;
+  --el-color-primary-light-7: #a3d4fe;
+  --el-color-primary-light-8: #c1e3fe;
+  --el-color-primary-light-9: #e0f1ff;
+  --el-color-primary-dark-2: #004d76;
+  --el-border-radius-base: 8px;
+  --el-border-radius-small: 6px;
+  --el-border-radius-round: 20px;
+  --el-font-family: 'Manrope', 'Inter', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, sans-serif;
+  --el-font-size-base: 14px;
+  --el-bg-color: var(--bg-primary);
+  --el-fill-color-light: var(--bg-secondary);
+  --el-border-color: var(--border-color);
+  --el-border-color-light: var(--border-color);
+  --el-text-color-primary: var(--text-primary);
+  --el-text-color-regular: var(--text-secondary);
+  --el-text-color-secondary: var(--text-muted);
+}
+
+html.dark {
+  --el-color-primary: #67bafd;
+  --el-color-primary-light-3: #85c9fd;
+  --el-color-primary-light-5: #a3d4fe;
+  --el-color-primary-dark-2: #58acef;
+  --el-bg-color: var(--bg-primary);
+  --el-fill-color-light: var(--bg-secondary);
 }

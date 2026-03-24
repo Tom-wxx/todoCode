@@ -82,13 +82,43 @@ async function handleBatchDelete() {
     </div>
 
     <div class="empty-state" v-else>
-      <el-icon :size="48" color="var(--text-muted)"><Document /></el-icon>
-      <p>暂无待办事项</p>
-      <el-button type="primary" @click="openAddForm">添加待办</el-button>
+      <div class="empty-icon">
+        <el-icon :size="56" color="var(--text-muted)"><Document /></el-icon>
+      </div>
+      <h3 class="empty-title">暂无待办事项</h3>
+      <p class="empty-desc">点击下方按钮开始添加你的第一个任务</p>
+      <button class="empty-add-btn" @click="openAddForm">
+        <el-icon><Plus /></el-icon>
+        添加待办
+      </button>
+    </div>
+
+    <!-- 底部迷你统计卡片 -->
+    <div class="mini-stats" v-if="todoStore.filteredTodos.length > 0">
+      <div class="mini-stat-card">
+        <div class="mini-stat-label">专注时长</div>
+        <div class="mini-stat-value">4.5 <span class="mini-stat-unit">小时</span></div>
+      </div>
+      <div class="mini-stat-card">
+        <div class="mini-stat-label">完成率</div>
+        <div class="mini-stat-value">{{ todoStore.stats.total > 0 ? Math.round(todoStore.stats.completed / todoStore.stats.total * 100) : 0 }}<span class="mini-stat-unit">%</span></div>
+        <div class="mini-progress">
+          <div class="mini-progress-fill" :style="{ width: (todoStore.stats.total > 0 ? todoStore.stats.completed / todoStore.stats.total * 100 : 0) + '%' }"></div>
+        </div>
+      </div>
+      <div class="mini-stat-card">
+        <div class="mini-stat-label">当前团队</div>
+        <div class="mini-stat-avatars">
+          <div class="avatar-circle" style="background: var(--accent)"></div>
+          <div class="avatar-circle" style="background: var(--tertiary); margin-left: -6px"></div>
+        </div>
+      </div>
     </div>
 
     <div class="add-btn-container">
-      <el-button type="primary" :icon="Plus" circle size="large" @click="openAddForm" class="add-btn" />
+      <button class="add-fab" @click="openAddForm">
+        <el-icon :size="22"><Plus /></el-icon>
+      </button>
     </div>
 
     <TodoForm
@@ -104,48 +134,175 @@ async function handleBatchDelete() {
   flex: 1;
   overflow-y: auto;
   position: relative;
-  padding: 8px 0;
 }
 
 .batch-toolbar {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 16px;
+  padding: 10px 28px;
   background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-color);
 }
 
 .batch-info {
+  font-family: 'Inter', sans-serif;
   font-size: 13px;
   color: var(--text-secondary);
   margin-right: 4px;
 }
 
 .todo-list {
-  padding: 8px 20px;
+  padding: 0 28px 120px;
 }
 
+/* 空状态 */
 .empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   height: 100%;
-  gap: 12px;
-  color: var(--text-muted);
-  font-size: 14px;
+  gap: 8px;
+  padding-bottom: 60px;
 }
 
+.empty-icon {
+  opacity: 0.3;
+  margin-bottom: 8px;
+}
+
+.empty-title {
+  font-family: 'Manrope', sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.empty-desc {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.empty-add-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 16px;
+  padding: 10px 24px;
+  background: var(--accent);
+  color: var(--on-accent);
+  border: none;
+  border-radius: 8px;
+  font-family: 'Manrope', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.empty-add-btn:hover {
+  background: var(--accent-dim);
+  box-shadow: 0 4px 20px rgba(0, 96, 148, 0.2);
+}
+
+/* 底部迷你统计卡片 */
+.mini-stats {
+  position: fixed;
+  bottom: 16px;
+  left: calc(var(--sidebar-width) + 28px);
+  right: 80px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  z-index: 10;
+}
+
+.mini-stat-card {
+  background: var(--surface-container-lowest);
+  border-radius: 12px;
+  padding: 16px 18px;
+  box-shadow: 0 4px 24px rgba(43, 47, 49, 0.06);
+}
+
+.mini-stat-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.mini-stat-value {
+  font-family: 'Manrope', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.mini-stat-unit {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.mini-progress {
+  height: 4px;
+  background: var(--bg-secondary);
+  border-radius: 2px;
+  margin-top: 10px;
+  overflow: hidden;
+}
+
+.mini-progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+
+.mini-stat-avatars {
+  display: flex;
+  align-items: center;
+  margin-top: 6px;
+}
+
+.avatar-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--surface-container-lowest);
+}
+
+/* FAB 添加按钮 */
 .add-btn-container {
-  position: absolute;
+  position: fixed;
   bottom: 20px;
   right: 20px;
+  z-index: 20;
 }
 
-.add-btn {
-  width: 48px !important;
-  height: 48px !important;
-  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.4);
+.add-fab {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  border: none;
+  background: var(--accent);
+  color: var(--on-accent);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 28px rgba(0, 96, 148, 0.3);
+  transition: all 0.2s ease;
+}
+
+.add-fab:hover {
+  background: var(--accent-dim);
+  box-shadow: 0 12px 36px rgba(0, 96, 148, 0.4);
+  transform: translateY(-2px);
 }
 </style>

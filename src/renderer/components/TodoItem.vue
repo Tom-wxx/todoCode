@@ -11,30 +11,50 @@ const emit = defineEmits<{
 }>()
 const todoStore = useTodoStore()
 
-// 右侧胶囊标签：过期 > 今日时间 > 分类 > 优先级
-const badge = computed(() => {
-  const t = props.todo
-  if (isOverdue(t.dueDate) && !t.completed) {
-    return { text: '已过期', type: 'danger' }
+// 优先级对应的 checkbox 颜色
+const checkColor = computed(() => {
+  if (props.todo.completed) return 'var(--accent)'
+  const map: Record<string, string> = {
+    high: 'var(--priority-high)',
+    medium: 'var(--priority-medium)',
+    low: 'var(--tertiary)'
   }
-  if (isToday(t.dueDate) && !t.completed) {
-    // 格式化为"上午/下午 H:mm"，若无时间则显示"今天"
+  return map[props.todo.priority] || 'var(--text-muted)'
+})
+
+// 右侧胶囊标签
+const badges = computed(() => {
+  const t = props.todo
+  const result: { text: string; type: string }[] = []
+
+  if (isOverdue(t.dueDate) && !t.completed) {
+    result.push({ text: '已过期', type: 'danger' })
+  } else if (isToday(t.dueDate) && !t.completed) {
     const d = new Date(t.dueDate!)
     const h = d.getHours(), m = d.getMinutes()
-    if (h === 0 && m === 0) return { text: '今天', type: 'today' }
-    const period = h < 12 ? '上午' : '下午'
-    const hh = h % 12 || 12
-    const mm = String(m).padStart(2, '0')
-    return { text: `${period} ${hh}:${mm}`, type: 'today' }
+    if (h === 0 && m === 0) {
+      result.push({ text: '今天', type: 'today' })
+    } else {
+      const period = h < 12 ? '上午' : '下午'
+      const hh = h % 12 || 12
+      const mm = String(m).padStart(2, '0')
+      result.push({ text: `${period} ${hh}:${mm}`, type: 'today' })
+    }
+  } else if (t.dueDate && !t.completed) {
+    result.push({ text: formatDate(t.dueDate), type: 'default' })
   }
-  if (t.dueDate && !t.completed) {
-    return { text: formatDate(t.dueDate), type: 'default' }
-  }
+
   if (t.category) {
-    return { text: t.category, type: 'default' }
+    result.push({ text: t.category, type: 'category' })
   }
-  const labels: Record<string, string> = { high: '高优先级', medium: '中优先级', low: '低优先级' }
-  return { text: labels[t.priority] || '', type: t.priority === 'high' ? 'high' : 'default' }
+
+  if (t.tags && t.tags.length > 0) {
+    t.tags.forEach(tag => {
+      result.push({ text: tag, type: 'tag' })
+    })
+  }
+
+  return result
 })
 
 async function handleDelete() {
@@ -58,6 +78,7 @@ async function handleDelete() {
     <div
       class="circle-check"
       :class="{ checked: todo.completed }"
+      :style="{ borderColor: checkColor, '--check-color': checkColor }"
       @click.stop="todoStore.toggleTodo(todo.id)"
     >
       <svg v-if="todo.completed" viewBox="0 0 16 16" fill="none">
@@ -69,22 +90,27 @@ async function handleDelete() {
     <div class="todo-body" @click="emit('edit', todo)">
       <div class="todo-title">{{ todo.title }}</div>
       <div v-if="todo.description" class="todo-desc">{{ todo.description }}</div>
+      <div class="todo-badges" v-if="badges.length > 0">
+        <span
+          v-for="(b, i) in badges"
+          :key="i"
+          class="pill"
+          :class="`pill-${b.type}`"
+        >{{ b.text }}</span>
+      </div>
     </div>
 
-    <!-- 右侧胶囊标签 -->
-    <div class="todo-right">
-      <span class="badge" :class="`badge-${badge.type}`">{{ badge.text }}</span>
-      <div class="todo-actions">
-        <el-button text size="small" @click.stop="emit('toggle-select')" :type="selected ? 'primary' : ''">
-          <el-icon><Select /></el-icon>
-        </el-button>
-        <el-button text size="small" @click.stop="emit('edit', todo)">
-          <el-icon><Edit /></el-icon>
-        </el-button>
-        <el-button text size="small" type="danger" @click.stop="handleDelete">
-          <el-icon><Delete /></el-icon>
-        </el-button>
-      </div>
+    <!-- 操作按钮 -->
+    <div class="todo-actions">
+      <el-button text size="small" @click.stop="emit('toggle-select')" :type="selected ? 'primary' : ''">
+        <el-icon><Select /></el-icon>
+      </el-button>
+      <el-button text size="small" @click.stop="emit('edit', todo)">
+        <el-icon><Edit /></el-icon>
+      </el-button>
+      <el-button text size="small" type="danger" @click.stop="handleDelete">
+        <el-icon><Delete /></el-icon>
+      </el-button>
     </div>
   </div>
 </template>
@@ -92,58 +118,57 @@ async function handleDelete() {
 <style scoped>
 .todo-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 14px;
-  padding: 14px 16px;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
+  padding: 16px 18px;
+  background: var(--surface-container-lowest);
+  border-radius: 8px;
   margin-bottom: 8px;
-  transition: box-shadow 0.2s, border-color 0.2s;
+  transition: all 0.2s ease;
   cursor: default;
 }
 
 .todo-item:hover {
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
-  border-color: #d0d5dd;
+  box-shadow: 0 4px 24px rgba(43, 47, 49, 0.05);
 }
 
 .todo-item.selected {
-  border-color: var(--accent);
-  background: rgba(64, 158, 255, 0.04);
+  background: rgba(0, 96, 148, 0.04);
+  box-shadow: 0 0 0 1px rgba(0, 96, 148, 0.15);
 }
 
 .todo-item.completed {
-  opacity: 0.55;
+  opacity: 0.5;
 }
 
 /* 圆形 checkbox */
 .circle-check {
   flex-shrink: 0;
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
-  border: 2px solid var(--border-color);
+  border: 2.5px solid var(--check-color, var(--text-muted));
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: border-color 0.2s, background 0.2s;
+  transition: all 0.2s ease;
   color: white;
+  margin-top: 1px;
 }
 
 .circle-check:hover {
-  border-color: var(--accent);
+  transform: scale(1.1);
 }
 
 .circle-check.checked {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--check-color, var(--accent));
+  border-color: var(--check-color, var(--accent));
 }
 
 .circle-check svg {
-  width: 12px;
-  height: 12px;
+  width: 13px;
+  height: 13px;
 }
 
 /* 内容 */
@@ -154,8 +179,9 @@ async function handleDelete() {
 }
 
 .todo-title {
+  font-family: 'Manrope', sans-serif;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-primary);
   line-height: 1.5;
   overflow: hidden;
@@ -166,59 +192,71 @@ async function handleDelete() {
 .todo-item.completed .todo-title {
   text-decoration: line-through;
   color: var(--text-muted);
+  font-weight: 500;
 }
 
 .todo-desc {
+  font-family: 'Inter', sans-serif;
   font-size: 12px;
   color: var(--text-muted);
-  margin-top: 3px;
+  margin-top: 2px;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* 右侧区域 */
-.todo-right {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* 胶囊标签 */
-.badge {
-  font-size: 12px;
-  padding: 3px 10px;
-  border-radius: 20px;
   white-space: nowrap;
   line-height: 1.5;
 }
 
-.badge-default {
+/* 标签 */
+.todo-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.pill {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 10px;
+  border-radius: 12px;
+  white-space: nowrap;
+  line-height: 1.5;
+}
+
+.pill-default {
   background: var(--bg-secondary);
   color: var(--text-secondary);
 }
 
-.badge-high {
-  background: rgba(245, 108, 108, 0.1);
-  color: var(--priority-high);
+.pill-category {
+  background: rgba(0, 96, 148, 0.08);
+  color: var(--accent);
 }
 
-.badge-danger {
-  background: rgba(245, 108, 108, 0.12);
-  color: var(--priority-high);
+.pill-tag {
+  background: rgba(0, 100, 121, 0.08);
+  color: var(--tertiary);
 }
 
-.badge-today {
-  background: rgba(64, 158, 255, 0.1);
+.pill-danger {
+  background: rgba(179, 27, 37, 0.08);
+  color: var(--priority-high);
+  font-weight: 600;
+}
+
+.pill-today {
+  background: rgba(0, 96, 148, 0.08);
   color: var(--accent);
 }
 
 /* 操作按钮 hover 显示 */
 .todo-actions {
+  flex-shrink: 0;
   display: flex;
   opacity: 0;
-  transition: opacity 0.15s;
+  transition: opacity 0.2s;
+  margin-top: 1px;
 }
 
 .todo-item:hover .todo-actions {
