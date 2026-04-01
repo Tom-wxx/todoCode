@@ -5,7 +5,7 @@ import { useSettingsStore } from '../stores/settings'
 import { ElMessage } from 'element-plus'
 import type { Todo } from '../utils/helpers'
 
-const props = defineProps<{ visible: boolean; todo: Todo | null; defaultDate?: string | null }>()
+const props = defineProps<{ visible: boolean; todo: Todo | null; defaultDate?: string | null; defaultCategory?: string }>()
 const emit = defineEmits<{ (e: 'close'): void }>()
 
 const todoStore = useTodoStore()
@@ -41,7 +41,7 @@ watch(() => props.visible, (val) => {
       reminder: props.todo.reminder
     }
   } else if (val) {
-    form.value = { title: '', description: '', priority: 'medium', category: '', tags: [], dueDate: props.defaultDate || null, reminder: null }
+    form.value = { title: '', description: '', priority: 'medium', category: props.defaultCategory || '', tags: [], dueDate: props.defaultDate || null, reminder: null }
   }
 })
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, inject, watch, type Ref } from 'vue'
+import { ref, inject, watch, computed, type Ref } from 'vue'
 import { useTodoStore } from '../stores/todo'
 import { Plus, Delete, Select, CloseBold, CircleCheck, Document } from '@element-plus/icons-vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
@@ -22,6 +22,11 @@ if (showAddForm) {
     }
   })
 }
+
+const FIXED_FILTERS = new Set(['all', 'today', 'overdue', 'completed'])
+const defaultCategory = computed(() =>
+  FIXED_FILTERS.has(todoStore.currentFilter) ? '' : todoStore.currentFilter
+)
 
 function openAddForm() {
   editingTodo.value = null
@@ -124,6 +129,7 @@ async function handleBatchDelete() {
     <TodoForm
       :visible="showForm"
       :todo="editingTodo"
+      :default-category="defaultCategory"
       @close="handleFormClose"
     />
   </div>
