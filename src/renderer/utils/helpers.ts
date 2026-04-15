@@ -42,3 +42,5 @@ export interface Todo {
 
 export type FilterType = 'all' | 'today' | 'overdue' | 'completed' | string
 export type PriorityFilter = 'all' | 'high' | 'medium' | 'low'
+export type SortBy = 'createdAt' | 'dueDate' | 'priority' | 'title'
+export type SortOrder = 'asc' | 'desc'

@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { generateId, isOverdue, isToday, type Todo, type FilterType, type PriorityFilter } from '../utils/helpers'
 import { getApi } from '../utils/api'
+import { useSettingsStore } from './settings'
 
 export const useTodoStore = defineStore('todo', () => {
   const todos = ref<Todo[]>([])
@@ -60,15 +61,34 @@ export const useTodoStore = defineStore('todo', () => {
       )
     }
 
-    // 排序: 未完成优先，高优先级优先，有到期日优先
+    // 排序: 未完成优先（固定规则），再按用户选择的维度排序
+    const settings = useSettingsStore()
     const priorityOrder = { high: 0, medium: 1, low: 2 }
+    const dir = settings.sortOrder === 'asc' ? 1 : -1
+    const collator = new Intl.Collator('zh-Hans-CN', { sensitivity: 'base' })
+
+    function compareBy(a: Todo, b: Todo): number {
+      switch (settings.sortBy) {
+        case 'dueDate': {
+          // 无到期日的始终排到最后（不受升降序影响）
+          if (!a.dueDate && !b.dueDate) return 0
+          if (!a.dueDate) return 1
+          if (!b.dueDate) return -1
+          return (new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()) * dir
+        }
+        case 'priority':
+          return (priorityOrder[a.priority] - priorityOrder[b.priority]) * dir
+        case 'title':
+          return collator.compare(a.title, b.title) * dir
+        case 'createdAt':
+        default:
+          return (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()) * dir
+      }
+    }
+
     result.sort((a, b) => {
       if (a.completed !== b.completed) return a.completed ? 1 : -1
-      if (a.priority !== b.priority) return priorityOrder[a.priority] - priorityOrder[b.priority]
-      if (a.dueDate && b.dueDate) return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
-      if (a.dueDate) return -1
-      if (b.dueDate) return 1
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      return compareBy(a, b)
     })
 
     return result

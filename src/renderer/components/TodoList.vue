@@ -1,13 +1,30 @@
 <script setup lang="ts">
 import { ref, inject, watch, computed, type Ref } from 'vue'
 import { useTodoStore } from '../stores/todo'
-import { Plus, Delete, Select, CloseBold, CircleCheck, Document } from '@element-plus/icons-vue'
+import { useSettingsStore } from '../stores/settings'
+import { Plus, Delete, Select, CloseBold, CircleCheck, Document, Sort, Top, Bottom } from '@element-plus/icons-vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import TodoItem from './TodoItem.vue'
 import TodoForm from './TodoForm.vue'
-import type { Todo } from '../utils/helpers'
+import type { Todo, SortBy } from '../utils/helpers'
 
 const todoStore = useTodoStore()
+const settingsStore = useSettingsStore()
+
+const SORT_OPTIONS: { value: SortBy; label: string }[] = [
+  { value: 'createdAt', label: '创建时间' },
+  { value: 'dueDate', label: '到期日' },
+  { value: 'priority', label: '优先级' },
+  { value: 'title', label: '标题' }
+]
+
+function handleSortByChange(val: SortBy) {
+  settingsStore.setSort(val, settingsStore.sortOrder)
+}
+
+function toggleSortOrder() {
+  settingsStore.setSort(settingsStore.sortBy, settingsStore.sortOrder === 'asc' ? 'desc' : 'asc')
+}
 const showForm = ref(false)
 const editingTodo = ref<Todo | null>(null)
 
@@ -56,6 +73,32 @@ async function handleBatchDelete() {
 
 <template>
   <div class="todo-list-container">
+    <!-- 排序工具栏 -->
+    <div class="sort-toolbar">
+      <el-icon class="sort-icon"><Sort /></el-icon>
+      <span class="sort-label">排序</span>
+      <el-select
+        :model-value="settingsStore.sortBy"
+        size="small"
+        class="sort-select"
+        @update:model-value="handleSortByChange"
+      >
+        <el-option
+          v-for="opt in SORT_OPTIONS"
+          :key="opt.value"
+          :label="opt.label"
+          :value="opt.value"
+        />
+      </el-select>
+      <button
+        class="sort-order-btn"
+        :title="settingsStore.sortOrder === 'asc' ? '升序' : '降序'"
+        @click="toggleSortOrder"
+      >
+        <el-icon><Top v-if="settingsStore.sortOrder === 'asc'" /><Bottom v-else /></el-icon>
+      </button>
+    </div>
+
     <!-- 批量操作工具栏 -->
     <div class="batch-toolbar" v-if="todoStore.selectedIds.size > 0">
       <span class="batch-info">已选 {{ todoStore.selectedIds.size }} 项</span>
@@ -140,6 +183,49 @@ async function handleBatchDelete() {
   flex: 1;
   overflow-y: auto;
   position: relative;
+}
+
+.sort-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 28px 4px;
+}
+
+.sort-icon {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.sort-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 0.3px;
+}
+
+.sort-select {
+  width: 120px;
+}
+
+.sort-order-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-container-lowest);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.sort-order-btn:hover {
+  background: var(--bg-secondary);
+  color: var(--accent);
+  border-color: var(--accent);
 }
 
 .batch-toolbar {
