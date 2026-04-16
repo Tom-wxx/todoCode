@@ -141,28 +141,6 @@ async function handleBatchDelete() {
       </button>
     </div>
 
-    <!-- 底部迷你统计卡片 -->
-    <div class="mini-stats" v-if="todoStore.filteredTodos.length > 0">
-      <div class="mini-stat-card">
-        <div class="mini-stat-label">专注时长</div>
-        <div class="mini-stat-value">4.5 <span class="mini-stat-unit">小时</span></div>
-      </div>
-      <div class="mini-stat-card">
-        <div class="mini-stat-label">完成率</div>
-        <div class="mini-stat-value">{{ todoStore.stats.total > 0 ? Math.round(todoStore.stats.completed / todoStore.stats.total * 100) : 0 }}<span class="mini-stat-unit">%</span></div>
-        <div class="mini-progress">
-          <div class="mini-progress-fill" :style="{ width: (todoStore.stats.total > 0 ? todoStore.stats.completed / todoStore.stats.total * 100 : 0) + '%' }"></div>
-        </div>
-      </div>
-      <div class="mini-stat-card">
-        <div class="mini-stat-label">当前团队</div>
-        <div class="mini-stat-avatars">
-          <div class="avatar-circle" style="background: var(--accent)"></div>
-          <div class="avatar-circle" style="background: var(--tertiary); margin-left: -6px"></div>
-        </div>
-      </div>
-    </div>
-
     <div class="add-btn-container">
       <button class="add-fab" @click="openAddForm">
         <el-icon :size="22"><Plus /></el-icon>

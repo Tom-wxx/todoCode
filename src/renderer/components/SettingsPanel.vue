@@ -156,7 +156,7 @@ function openFolder(path: string) {
         <div class="setting-item">
           <div class="setting-info">
             <div class="setting-label">数字静修所</div>
-            <div class="setting-desc">版本 1.0.0 · Electron + Vue 3</div>
+            <div class="setting-desc">版本 1.0.0</div>
           </div>
         </div>
       </div>

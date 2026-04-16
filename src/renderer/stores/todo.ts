@@ -40,6 +40,7 @@ export const useTodoStore = defineStore('todo', () => {
         result = result.filter(t => t.completed)
         break
       case 'all':
+        result = result.filter(t => !t.completed)
         break
       default:
         // 按分类筛选
