@@ -30,9 +30,15 @@ function close() { getApi().window.close() }
       <button class="action-btn theme-btn" @click="settingsStore.toggleDarkMode" :title="settingsStore.darkMode ? '浅色模式' : '深色模式'">
         <el-icon :size="16"><Sunny v-if="settingsStore.darkMode" /><Moon v-else /></el-icon>
       </button>
-      <button class="win-btn" @click="minimize"><span>&#x2014;</span></button>
-      <button class="win-btn" @click="maximize"><span>&#9633;</span></button>
-      <button class="win-btn close-btn" @click="close"><span>&#10005;</span></button>
+      <button class="win-btn" @click="minimize">
+        <svg width="12" height="12" viewBox="0 0 12 12"><rect x="1" y="5.5" width="10" height="1" fill="currentColor"/></svg>
+      </button>
+      <button class="win-btn" @click="maximize">
+        <svg width="12" height="12" viewBox="0 0 12 12"><rect x="1.5" y="1.5" width="9" height="9" rx="0.5" stroke="currentColor" stroke-width="1" fill="none"/></svg>
+      </button>
+      <button class="win-btn close-btn" @click="close">
+        <svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+      </button>
     </div>
   </div>
 </template>

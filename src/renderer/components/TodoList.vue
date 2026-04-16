@@ -190,7 +190,7 @@ async function handleBatchDelete() {
   width: 28px;
   height: 28px;
   border-radius: 8px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-color);
   background: var(--surface-container-lowest);
   color: var(--text-secondary);
   cursor: pointer;

@@ -52,14 +52,14 @@ html.dark {
   --bg-sidebar: #0f1629;
   --surface-container: #1a2035;
   --surface-container-high: #1e2540;
-  --surface-container-lowest: #080c0d;
+  --surface-container-lowest: #141c2a;
 
   --text-primary: #d8dee1;
   --text-secondary: #9a9d9f;
   --text-muted: #6b6e70;
 
-  --border-color: rgba(170, 174, 176, 0.08);
-  --border-color-hover: rgba(170, 174, 176, 0.15);
+  --border-color: #3e5068;
+  --border-color-hover: #567a9e;
 
   --accent: #67bafd;
   --accent-dim: #58acef;
@@ -174,4 +174,7 @@ html.dark {
   --el-color-primary-dark-2: #58acef;
   --el-bg-color: var(--bg-primary);
   --el-fill-color-light: var(--bg-secondary);
+  --el-border-color: var(--border-color);
+  --el-border-color-light: var(--border-color);
+  --el-fill-color-blank: var(--surface-container-lowest);
 }
