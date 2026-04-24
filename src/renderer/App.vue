@@ -2,6 +2,7 @@
 import { onMounted, onUnmounted, ref, provide, computed } from 'vue'
 import { useTodoStore } from './stores/todo'
 import { useSettingsStore } from './stores/settings'
+import { getApi } from './utils/api'
 import TitleBar from './components/TitleBar.vue'
 import Sidebar from './components/Sidebar.vue'
 import SearchBar from './components/SearchBar.vue'
@@ -30,7 +31,16 @@ const greeting = computed(() => {
   return '晚上好'
 })
 
+function isEditableTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false
+  if (target.isContentEditable) return true
+  const tag = target.tagName
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT'
+}
+
 function handleKeydown(e: KeyboardEvent) {
+  // 用户在输入框/文本域中打字时，不抢占快捷键（否则 Ctrl+D 会误切暗色主题等）
+  if (isEditableTarget(e.target)) return
   if (e.ctrlKey && e.key === 'n') {
     e.preventDefault()
     showAddForm.value = true
@@ -43,14 +53,31 @@ function handleKeydown(e: KeyboardEvent) {
   }
 }
 
+// 窗口被最小化/隐藏到托盘时，把尚未落盘的防抖保存强制 flush，防止意外退出丢数据
+function handleVisibilityChange() {
+  if (document.visibilityState === 'hidden') {
+    void todoStore.flushSave()
+  }
+}
+
 onMounted(async () => {
   await settingsStore.load()
   await todoStore.loadTodos()
   document.addEventListener('keydown', handleKeydown)
+  document.addEventListener('visibilitychange', handleVisibilityChange)
+  // 主进程 before-quit 时触发：把防抖窗内的变更落盘后再通知主进程继续退出
+  getApi().app.onBeforeQuit(async () => {
+    try {
+      await todoStore.flushSave()
+    } finally {
+      getApi().app.notifyFlushDone()
+    }
+  })
 })
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown)
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
 })
 </script>
 

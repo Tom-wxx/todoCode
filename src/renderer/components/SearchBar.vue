@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, inject, onMounted, type Ref } from 'vue'
 import { useTodoStore } from '../stores/todo'
-import { Search } from '@element-plus/icons-vue'
+import { Filter, Search } from '@element-plus/icons-vue'
 
 const todoStore = useTodoStore()
 const localQuery = ref(todoStore.searchQuery)

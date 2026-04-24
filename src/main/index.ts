@@ -1,7 +1,16 @@
 import { app, BrowserWindow, ipcMain, Notification, dialog, Tray, Menu, nativeTheme, shell } from 'electron'
-import { join } from 'path'
+import { join, resolve as resolvePath, relative as relativePath, isAbsolute } from 'path'
 import fs from 'fs'
 import Store from 'electron-store'
+
+// 判断 child 是否等于 parent 或位于 parent 内部（规范化后比较，避免 startsWith 前缀歧义）
+function isPathInside(parent: string, child: string): boolean {
+  const p = resolvePath(parent)
+  const c = resolvePath(child)
+  if (p === c) return true
+  const rel = relativePath(p, c)
+  return !!rel && !rel.startsWith('..') && !isAbsolute(rel)
+}
 
 const isDev = !app.isPackaged
 
@@ -34,22 +43,26 @@ function ensureDir(dir: string) {
   }
 }
 
+// 日志写入队列：串行化 append，避免同步 IO 阻塞主线程
+let logQueue: Promise<void> = Promise.resolve()
+
 function writeLog(level: string, message: string) {
   const enabled = configStore.get('logEnabled') as boolean
   if (!enabled) return
 
   const logDir = getLogPath()
-  ensureDir(logDir)
-
   const now = new Date()
-  const dateStr = now.toISOString().split('T')[0]
+  // 日志按本地日期滚动，避免用户看到的"今天"日志跨到另一个文件
+  const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
   const logFile = join(logDir, `${dateStr}.log`)
-  const timestamp = now.toISOString()
-  const line = `[${timestamp}] [${level}] ${message}\n`
+  const line = `[${now.toISOString()}] [${level}] ${message}\n`
 
-  try {
-    fs.appendFileSync(logFile, line, 'utf-8')
-  } catch (_e) { /* ignore write errors */ }
+  logQueue = logQueue.then(async () => {
+    try {
+      await fs.promises.mkdir(logDir, { recursive: true })
+      await fs.promises.appendFile(logFile, line, 'utf-8')
+    } catch { /* ignore write errors */ }
+  })
 }
 
 // 使用自定义路径创建数据 store
@@ -77,7 +90,27 @@ function createDataStore() {
 let store = createDataStore()
 let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null
-let reminderTimer: NodeJS.Timeout | null = null
+let isQuitting = false
+
+// Windows/Linux: 防止多开导致多个托盘图标
+const gotSingleInstanceLock = app.requestSingleInstanceLock()
+if (!gotSingleInstanceLock) {
+  app.quit()
+} else {
+  app.on('second-instance', () => {
+    if (!mainWindow || mainWindow.isDestroyed()) {
+      createWindow()
+    }
+
+    if (mainWindow?.isMinimized()) mainWindow.restore()
+    mainWindow?.show()
+    mainWindow?.focus()
+  })
+}
+
+function getAppIconPath(): string {
+  return join(__dirname, '../../resources', process.platform === 'win32' ? 'icon.ico' : 'icon.png')
+}
 
 function createWindow(): void {
   mainWindow = new BrowserWindow({
@@ -87,9 +120,10 @@ function createWindow(): void {
     minHeight: 600,
     frame: false,
     show: false,
+    icon: getAppIconPath(),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false,
+      sandbox: true,
       contextIsolation: true
     }
   })
@@ -99,8 +133,11 @@ function createWindow(): void {
   })
 
   mainWindow.on('close', (e) => {
-    e.preventDefault()
-    mainWindow?.hide()
+    // 正常关闭 → 隐藏到托盘；应用真正退出时（isQuitting）放行，让 before-quit 的 flush 逻辑生效
+    if (!isQuitting) {
+      e.preventDefault()
+      mainWindow?.hide()
+    }
   })
 
   if (isDev && process.env['ELECTRON_RENDERER_URL']) {
@@ -113,39 +150,15 @@ function createWindow(): void {
 }
 
 function createTray(): void {
-  tray = new Tray(join(__dirname, '../../resources/icon.png'))
+  if (tray) return
+  tray = new Tray(getAppIconPath())
   const contextMenu = Menu.buildFromTemplate([
     { label: '显示主窗口', click: () => mainWindow?.show() },
-    { label: '退出', click: () => { mainWindow?.destroy(); app.quit() } }
+    { label: '退出', click: () => { app.quit() } }
   ])
   tray.setToolTip('待办事项')
   tray.setContextMenu(contextMenu)
   tray.on('double-click', () => mainWindow?.show())
-}
-
-function setupReminderCheck(): void {
-  reminderTimer = setInterval(() => {
-    const todos = store.get('todos') as any[]
-    const now = new Date()
-    let changed = false
-    todos.forEach((todo: any) => {
-      if (todo.reminder && !todo.completed && !todo.reminded) {
-        const reminderTime = new Date(todo.reminder)
-        if (reminderTime <= now) {
-          new Notification({
-            title: '待办提醒',
-            body: todo.title
-          }).show()
-          todo.reminded = true
-          changed = true
-          writeLog('INFO', `提醒触发: ${todo.title}`)
-        }
-      }
-    })
-    if (changed) {
-      store.set('todos', todos)
-    }
-  }, 60000)
 }
 
 // IPC handlers
@@ -195,7 +208,7 @@ function setupIPC(): void {
       filters: [{ name: 'JSON', extensions: ['json'] }]
     })
     if (!result.canceled && result.filePath) {
-      fs.writeFileSync(result.filePath, data, 'utf-8')
+      await fs.promises.writeFile(result.filePath, data, 'utf-8')
       writeLog('INFO', `数据已导出到: ${result.filePath}`)
       return true
     }
@@ -209,16 +222,28 @@ function setupIPC(): void {
       properties: ['openFile']
     })
     if (!result.canceled && result.filePaths.length > 0) {
-      const content = fs.readFileSync(result.filePaths[0], 'utf-8')
+      const content = await fs.promises.readFile(result.filePaths[0], 'utf-8')
       writeLog('INFO', `数据已从 ${result.filePaths[0]} 导入`)
       return content
     }
     return null
   })
 
+  // 提醒由 renderer 扫描触发，这里只负责展示原生通知（main 不再触碰 todos 数据）
+  ipcMain.handle('notify:show', (_event, title: string, body: string) => {
+    try {
+      new Notification({ title, body }).show()
+      writeLog('INFO', `提醒触发: ${body}`)
+    } catch (e) {
+      writeLog('ERROR', `通知展示失败: ${e}`)
+    }
+  })
+
   ipcMain.handle('theme:get-system', () => {
     return nativeTheme.shouldUseDarkColors
   })
+
+  ipcMain.handle('app:getVersion', () => app.getVersion())
 
   // 设置相关 IPC
   ipcMain.handle('config:get', () => {
@@ -290,13 +315,31 @@ function setupIPC(): void {
     if (enabled) writeLog('INFO', '日志记录已启用')
   })
 
-  ipcMain.handle('config:openPath', (_event, path: string) => {
-    // 仅允许打开数据目录和日志目录
-    const allowedPaths = [getDataPath(), getLogPath(), app.getPath('userData')]
-    const isAllowed = allowedPaths.some(allowed => path.startsWith(allowed))
+  ipcMain.handle('config:openPath', (_event, target: string) => {
+    // 仅允许打开数据目录和日志目录。用 relative 判断包含关系，避免 startsWith 前缀歧义（如 C:\data vs C:\data2）
+    const allowedRoots = [getDataPath(), getLogPath(), app.getPath('userData')]
+    const isAllowed = allowedRoots.some(root => isPathInside(root, target))
     if (isAllowed) {
-      shell.openPath(path)
+      shell.openPath(target)
+    } else {
+      writeLog('WARN', `拒绝打开非白名单路径: ${target}`)
     }
+  })
+}
+
+// 退出前让 renderer flush 未落盘的数据，避免托盘"退出"丢 300ms 防抖窗内的变更
+async function flushRendererBeforeQuit(): Promise<void> {
+  if (!mainWindow || mainWindow.isDestroyed()) return
+  await new Promise<void>((resolve) => {
+    const timer = setTimeout(() => {
+      writeLog('WARN', '退出前 flush 超时，继续退出')
+      resolve()
+    }, 2000)
+    ipcMain.once('app:flush-done', () => {
+      clearTimeout(timer)
+      resolve()
+    })
+    mainWindow!.webContents.send('app:before-quit')
   })
 }
 
@@ -305,12 +348,21 @@ app.whenReady().then(() => {
   setupIPC()
   createWindow()
   try { createTray() } catch (_e) { /* no tray icon */ }
-  setupReminderCheck()
+})
+
+app.on('before-quit', (e) => {
+  if (isQuitting) return
+  e.preventDefault()
+  isQuitting = true
+  flushRendererBeforeQuit().finally(() => {
+    writeLog('INFO', '应用关闭')
+    try { tray?.destroy() } catch { /* ignore */ }
+    tray = null
+    app.quit()
+  })
 })
 
 app.on('window-all-closed', () => {
-  writeLog('INFO', '应用关闭')
-  if (reminderTimer) clearInterval(reminderTimer)
   if (process.platform !== 'darwin') app.quit()
 })
 

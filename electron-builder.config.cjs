@@ -11,7 +11,8 @@ const config = {
   files: ['out/**/*', 'resources/**/*'],
   win: {
     target: ['nsis'],
-    icon: 'resources/icon.png',
+    // Windows exe/taskbar icon should be .ico (multi-size) for consistent results.
+    icon: 'resources/icon.ico',
     signAndEditExecutable: false
   },
   nsis: {

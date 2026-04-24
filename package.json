@@ -7,8 +7,9 @@
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
-    "pack": "electron-builder --dir",
-    "dist": "electron-vite build && electron-builder --config electron-builder.config.cjs"
+    "pack": "electron-builder --config electron-builder.config.cjs --dir",
+    "dist": "electron-vite build && electron-builder --config electron-builder.config.cjs",
+    "gen:icon": "node scripts/generate-icon.mjs"
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.1",
@@ -22,6 +23,8 @@
     "electron": "^28.2.0",
     "electron-builder": "^24.9.1",
     "electron-vite": "^2.0.0",
+    "png-to-ico": "^2.1.8",
+    "sharp": "^0.34.5",
     "typescript": "^5.3.3",
     "vite": "^5.1.0"
   }

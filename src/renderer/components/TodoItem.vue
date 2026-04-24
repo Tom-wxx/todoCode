@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { Delete, Edit, Select } from '@element-plus/icons-vue'
 import { useTodoStore } from '../stores/todo'
 import { formatDate, isOverdue, isToday, type Todo } from '../utils/helpers'
 import { ElMessageBox, ElMessage } from 'element-plus'
@@ -30,16 +31,8 @@ const badges = computed(() => {
   if (isOverdue(t.dueDate) && !t.completed) {
     result.push({ text: '已过期', type: 'danger' })
   } else if (isToday(t.dueDate) && !t.completed) {
-    const d = new Date(t.dueDate!)
-    const h = d.getHours(), m = d.getMinutes()
-    if (h === 0 && m === 0) {
-      result.push({ text: '今天', type: 'today' })
-    } else {
-      const period = h < 12 ? '上午' : '下午'
-      const hh = h % 12 || 12
-      const mm = String(m).padStart(2, '0')
-      result.push({ text: `${period} ${hh}:${mm}`, type: 'today' })
-    }
+    // dueDate 为 YYYY-MM-DD，无时间分量，直接显示"今天"
+    result.push({ text: '今天', type: 'today' })
   } else if (t.dueDate && !t.completed) {
     result.push({ text: formatDate(t.dueDate), type: 'default' })
   }

@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { Back, CircleCheck, Clock, Document } from '@element-plus/icons-vue'
 import { useTodoStore } from '../stores/todo'
 import { useSettingsStore } from '../stores/settings'
 import { PRIORITY_LABELS_FULL, PRIORITY_HEX_COLORS } from '../utils/constants'
+import { toLocalDateStr } from '../utils/helpers'
 
 const todoStore = useTodoStore()
 const settingsStore = useSettingsStore()
@@ -16,42 +18,72 @@ function getPriorityColor(key: string) {
 }
 
 function getWeekDay(dateStr: string) {
-  const d = new Date(dateStr)
+  const d = new Date(`${dateStr}T00:00:00`)
   const days = ['日', '一', '二', '三', '四', '五', '六']
   return days[d.getDay()]
 }
 
-function getBarHeight(count: number) {
-  const max = Math.max(...todoStore.stats.weekTrend.map(d => d.count), 1)
-  return Math.max((count / max) * 100, 4) + '%'
+function formatChangeLabel(current: number, previous: number) {
+  if (previous === 0) {
+    return current === 0 ? '与上周持平' : `较上周新增 ${current}`
+  }
+  const delta = current - previous
+  if (delta === 0) return '与上周持平'
+  return `${delta > 0 ? '+' : ''}${delta} vs 上周`
 }
 
-// 完成率
-const completionRate = computed(() => {
-  return todoStore.stats.total > 0 ? Math.round(todoStore.stats.completed / todoStore.stats.total * 100) : 0
-})
+const thisWeekCompleted = computed(() =>
+  todoStore.stats.weekTrend.reduce((sum, day) => sum + day.count, 0)
+)
 
-// 分类百分比
-const categoryPercentages = computed(() => {
-  const total = Object.values(todoStore.stats.byCategory).reduce((a, b) => a + b, 0)
-  if (total === 0) return {}
-  const result: Record<string, number> = {}
-  for (const [cat, count] of Object.entries(todoStore.stats.byCategory)) {
-    result[cat] = Math.round((count / total) * 100)
+const previousWeekCompleted = computed(() => {
+  const bucket = new Map<string, number>()
+  for (const todo of todoStore.todos) {
+    if (!todo.completed || !todo.updatedAt) continue
+    const day = toLocalDateStr(todo.updatedAt)
+    bucket.set(day, (bucket.get(day) || 0) + 1)
   }
-  return result
+
+  let total = 0
+  for (let i = 13; i >= 7; i--) {
+    const d = new Date()
+    d.setDate(d.getDate() - i)
+    total += bucket.get(toLocalDateStr(d.toISOString())) || 0
+  }
+  return total
 })
 
-// SVG 折线图路径
+const completionRate = computed(() => {
+  return todoStore.stats.total > 0
+    ? Math.round((todoStore.stats.completed / todoStore.stats.total) * 100)
+    : 0
+})
+
+const highPriorityRatio = computed(() => {
+  if (todoStore.stats.active === 0) return 0
+  return Math.round((todoStore.stats.byPriority.high / todoStore.stats.active) * 100)
+})
+
+const activeSummaryLabel = computed(() => {
+  if (todoStore.stats.active === 0) return '当前没有未完成任务'
+  return `高优先级占比 ${highPriorityRatio.value}%`
+})
+
+const weekDeltaLabel = computed(() =>
+  formatChangeLabel(thisWeekCompleted.value, previousWeekCompleted.value)
+)
+
 const trendLinePath = computed(() => {
   const data = todoStore.stats.weekTrend
   if (data.length === 0) return ''
   const max = Math.max(...data.map(d => d.count), 1)
-  const w = 600, h = 160
-  const stepX = w / (data.length - 1 || 1)
+  const width = 600
+  const height = 160
+  const stepX = width / (data.length - 1 || 1)
+
   return data.map((d, i) => {
     const x = i * stepX
-    const y = h - (d.count / max) * (h - 20)
+    const y = height - (d.count / max) * (height - 20)
     return `${i === 0 ? 'M' : 'L'} ${x} ${y}`
   }).join(' ')
 })
@@ -60,44 +92,66 @@ const trendAreaPath = computed(() => {
   const data = todoStore.stats.weekTrend
   if (data.length === 0) return ''
   const max = Math.max(...data.map(d => d.count), 1)
-  const w = 600, h = 160
-  const stepX = w / (data.length - 1 || 1)
+  const width = 600
+  const height = 160
+  const stepX = width / (data.length - 1 || 1)
+
   let path = data.map((d, i) => {
     const x = i * stepX
-    const y = h - (d.count / max) * (h - 20)
+    const y = height - (d.count / max) * (height - 20)
     return `${i === 0 ? 'M' : 'L'} ${x} ${y}`
   }).join(' ')
-  path += ` L ${w} ${h} L 0 ${h} Z`
+  path += ` L ${width} ${height} L 0 ${height} Z`
   return path
 })
 
-// 热力图数据（模拟过去30天）
 const heatmapData = computed(() => {
-  const days: { date: string; level: number }[] = []
+  const bucket = new Map<string, number>()
+  for (const todo of todoStore.todos) {
+    if (!todo.completed || !todo.updatedAt) continue
+    const day = toLocalDateStr(todo.updatedAt)
+    bucket.set(day, (bucket.get(day) || 0) + 1)
+  }
+
+  const days: { date: string; level: number; count: number }[] = []
   const today = new Date()
   for (let i = 29; i >= 0; i--) {
     const d = new Date(today)
     d.setDate(d.getDate() - i)
-    const dateStr = d.toISOString().split('T')[0]
-    const completed = todoStore.todos.filter(t =>
-      t.completed && t.updatedAt && t.updatedAt.startsWith(dateStr)
-    ).length
-    const level = completed === 0 ? 0 : completed <= 1 ? 1 : completed <= 3 ? 2 : completed <= 5 ? 3 : 4
-    days.push({ date: dateStr, level })
+    const dateStr = toLocalDateStr(d.toISOString())
+    const count = bucket.get(dateStr) || 0
+    const level = count === 0 ? 0 : count <= 1 ? 1 : count <= 3 ? 2 : count <= 5 ? 3 : 4
+    days.push({ date: dateStr, level, count })
   }
   return days
 })
 
-// 环形图
+const heatmapInsight = computed(() => {
+  const weekdayCounts = new Array<number>(7).fill(0)
+  for (const day of heatmapData.value) {
+    if (day.count === 0) continue
+    weekdayCounts[new Date(`${day.date}T00:00:00`).getDay()] += day.count
+  }
+
+  const max = Math.max(...weekdayCounts)
+  if (max === 0) return '过去 30 天还没有完成记录。'
+
+  const index = weekdayCounts.findIndex(count => count === max)
+  const weekdayNames = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+  return `过去 30 天完成高峰出现在 ${weekdayNames[index]}，累计 ${max} 项。`
+})
+
 const donutSegments = computed(() => {
-  const cats = todoStore.stats.byCategory
-  const total = Object.values(cats).reduce((a, b) => a + b, 0)
+  const categories = todoStore.stats.byCategory
+  const total = Object.values(categories).reduce((sum, count) => sum + count, 0)
   if (total === 0) return []
+
   const colors = ['#006094', '#006479', '#e6a23c', '#b31b25', '#495f69', '#67bafd']
   let offset = 0
-  return Object.entries(cats).map(([name, count], i) => {
-    const pct = (count / total) * 100
-    const segment = { name, count, pct, offset, color: colors[i % colors.length] }
+
+  return Object.entries(categories).map(([name, count], index) => {
+    const pct = Math.round((count / total) * 100)
+    const segment = { name, count, pct, offset, color: colors[index % colors.length] }
     offset += pct
     return segment
   })
@@ -106,67 +160,69 @@ const donutSegments = computed(() => {
 
 <template>
   <div class="stats-panel">
-    <!-- 头部 -->
     <div class="stats-header">
       <div>
         <h2 class="stats-title">生产力仪表盘</h2>
-        <p class="stats-sub">你的专注与成就，在这里具象化。</p>
+        <p class="stats-sub">所有指标都基于当前本地任务数据实时计算。</p>
       </div>
       <div class="stats-actions">
-        <button class="stats-btn active">最近30天</button>
-        <button class="stats-btn" @click="settingsStore.showStats = false">
-          <el-icon><Back /></el-icon> 返回
+        <button class="stats-btn active">最近 30 天</button>
+        <button class="stats-btn" @click="settingsStore.showStats = false; settingsStore.showCalendar = false">
+          <el-icon><Back /></el-icon>
+          返回
         </button>
       </div>
     </div>
 
-    <!-- 指标卡片 -->
     <div class="metric-cards">
       <div class="metric-card">
         <div class="metric-icon">
           <el-icon :size="20"><CircleCheck /></el-icon>
         </div>
-        <div class="metric-trend up">+12% vs 上月</div>
+        <div class="metric-trend neutral">完成率 {{ completionRate }}%</div>
         <div class="metric-value">{{ todoStore.stats.completed.toLocaleString() }}</div>
         <div class="metric-label">已完成任务总数</div>
       </div>
+
       <div class="metric-card">
         <div class="metric-icon">
           <el-icon :size="20"><Document /></el-icon>
         </div>
-        <div class="metric-trend down">-5% vs 上周</div>
-        <div class="metric-value">{{ todoStore.stats.weekTrend.reduce((a, d) => a + d.count, 0) }}</div>
+        <div class="metric-trend" :class="thisWeekCompleted >= previousWeekCompleted ? 'up' : 'down'">{{ weekDeltaLabel }}</div>
+        <div class="metric-value">{{ thisWeekCompleted }}</div>
         <div class="metric-label">本周完成数</div>
       </div>
+
       <div class="metric-card">
         <div class="metric-icon tertiary">
           <el-icon :size="20"><Clock /></el-icon>
         </div>
-        <div class="metric-trend up">+8% vs 上周</div>
-        <div class="metric-value">4.5<span class="metric-unit">h</span></div>
-        <div class="metric-label">平均专注时长</div>
+        <div class="metric-trend neutral">{{ activeSummaryLabel }}</div>
+        <div class="metric-value">{{ todoStore.stats.active }}</div>
+        <div class="metric-label">未完成任务总数</div>
       </div>
     </div>
 
-    <!-- 任务完成趋势 -->
     <div class="chart-section">
       <div class="chart-header">
         <h3>任务完成趋势</h3>
         <div class="chart-legend">
-          <span class="legend-item"><span class="legend-dot" style="background: var(--accent)"></span>已完成</span>
-          <span class="legend-item"><span class="legend-dot" style="background: var(--tertiary)"></span>目标线</span>
+          <span class="legend-item">
+            <span class="legend-dot" style="background: var(--accent)"></span>
+            已完成
+          </span>
         </div>
       </div>
       <div class="trend-chart">
         <svg viewBox="0 0 600 160" preserveAspectRatio="none" class="trend-svg">
           <defs>
             <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.15"/>
-              <stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/>
+              <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.15" />
+              <stop offset="100%" stop-color="var(--accent)" stop-opacity="0" />
             </linearGradient>
           </defs>
           <path :d="trendAreaPath" fill="url(#areaGrad)" />
-          <path :d="trendLinePath" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path :d="trendLinePath" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
         </svg>
         <div class="trend-labels">
           <span v-for="day in todoStore.stats.weekTrend" :key="day.date" class="trend-day">
@@ -176,9 +232,7 @@ const donutSegments = computed(() => {
       </div>
     </div>
 
-    <!-- 下方两列 -->
     <div class="chart-grid">
-      <!-- 分类占比 -->
       <div class="chart-section">
         <h3>分类占比</h3>
         <div class="donut-container">
@@ -186,7 +240,9 @@ const donutSegments = computed(() => {
             <circle
               v-for="(seg, i) in donutSegments"
               :key="i"
-              cx="80" cy="80" r="60"
+              cx="80"
+              cy="80"
+              r="60"
               fill="none"
               :stroke="seg.color"
               stroke-width="24"
@@ -197,6 +253,7 @@ const donutSegments = computed(() => {
             <text x="80" y="76" text-anchor="middle" class="donut-number">{{ Object.keys(todoStore.stats.byCategory).length }}</text>
             <text x="80" y="96" text-anchor="middle" class="donut-label-text">个活跃分类</text>
           </svg>
+
           <div class="donut-legend">
             <div v-for="(seg, i) in donutSegments" :key="i" class="donut-legend-item">
               <span class="donut-legend-dot" :style="{ background: seg.color }"></span>
@@ -207,17 +264,16 @@ const donutSegments = computed(() => {
         </div>
       </div>
 
-      <!-- 生产力效率热力图 -->
       <div class="chart-section">
-        <h3>生产力效率热力图</h3>
+        <h3>近 30 天热力图</h3>
         <div class="heatmap-container">
           <div class="heatmap-grid">
             <div
-              v-for="(day, i) in heatmapData"
-              :key="i"
+              v-for="day in heatmapData"
+              :key="day.date"
               class="heatmap-cell"
               :class="`heat-${day.level}`"
-              :title="`${day.date}: ${day.level > 0 ? '已完成' + day.level + '项' : '无记录'}`"
+              :title="`${day.date}: ${day.count} 项`"
             ></div>
           </div>
           <div class="heatmap-legend">
@@ -230,23 +286,19 @@ const donutSegments = computed(() => {
             <span class="heatmap-legend-label">多</span>
           </div>
         </div>
-        <p class="heatmap-insight">
-          过去 30 天内，你的最高效率出现在 <strong>周二</strong> 下午。
-          <a class="insight-link">详情</a>
-        </p>
+        <p class="heatmap-insight">{{ heatmapInsight }}</p>
       </div>
     </div>
 
-    <!-- 优先级分布 -->
     <div class="chart-section">
-      <h3>未完成事项 - 优先级分布</h3>
+      <h3>未完成任务优先级分布</h3>
       <div class="priority-bars">
         <div v-for="(count, key) in todoStore.stats.byPriority" :key="key" class="priority-bar-item">
           <span class="priority-label">{{ getPriorityLabel(key as string) }}</span>
           <div class="bar-track">
             <div
               class="bar-fill"
-              :style="{ width: todoStore.stats.active > 0 ? (count / todoStore.stats.active * 100) + '%' : '0%', background: getPriorityColor(key as string) }"
+              :style="{ width: todoStore.stats.active > 0 ? `${(count / todoStore.stats.active) * 100}%` : '0%', background: getPriorityColor(key as string) }"
             ></div>
           </div>
           <span class="bar-count">{{ count }}</span>
@@ -263,7 +315,6 @@ const donutSegments = computed(() => {
   padding: 28px 32px 40px;
 }
 
-/* 头部 */
 .stats-header {
   display: flex;
   justify-content: space-between;
@@ -318,7 +369,6 @@ const donutSegments = computed(() => {
   border-color: var(--accent);
 }
 
-/* 指标卡片 */
 .metric-cards {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -360,8 +410,17 @@ const donutSegments = computed(() => {
   right: 20px;
 }
 
-.metric-trend.up { color: #006479; }
-.metric-trend.down { color: var(--priority-high); }
+.metric-trend.up {
+  color: #006479;
+}
+
+.metric-trend.down {
+  color: var(--priority-high);
+}
+
+.metric-trend.neutral {
+  color: var(--text-muted);
+}
 
 .metric-value {
   font-family: 'Manrope', sans-serif;
@@ -371,12 +430,6 @@ const donutSegments = computed(() => {
   line-height: 1.1;
 }
 
-.metric-unit {
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--text-muted);
-}
-
 .metric-label {
   font-family: 'Inter', sans-serif;
   font-size: 12px;
@@ -384,7 +437,6 @@ const donutSegments = computed(() => {
   margin-top: 4px;
 }
 
-/* 图表区块 */
 .chart-section {
   background: var(--surface-container-lowest);
   border-radius: 12px;
@@ -432,7 +484,6 @@ const donutSegments = computed(() => {
   border-radius: 50%;
 }
 
-/* 趋势折线图 */
 .trend-chart {
   position: relative;
 }
@@ -454,14 +505,12 @@ const donutSegments = computed(() => {
   color: var(--text-muted);
 }
 
-/* 两列布局 */
 .chart-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
 }
 
-/* 环形图 */
 .donut-container {
   display: flex;
   align-items: center;
@@ -518,7 +567,6 @@ const donutSegments = computed(() => {
   font-weight: 600;
 }
 
-/* 热力图 */
 .heatmap-container {
   margin-bottom: 12px;
 }
@@ -540,11 +588,25 @@ const donutSegments = computed(() => {
   height: 14px;
 }
 
-.heat-0 { background: var(--bg-secondary); }
-.heat-1 { background: rgba(0, 96, 148, 0.15); }
-.heat-2 { background: rgba(0, 96, 148, 0.35); }
-.heat-3 { background: rgba(0, 96, 148, 0.6); }
-.heat-4 { background: var(--accent); }
+.heat-0 {
+  background: var(--bg-secondary);
+}
+
+.heat-1 {
+  background: rgba(0, 96, 148, 0.15);
+}
+
+.heat-2 {
+  background: rgba(0, 96, 148, 0.35);
+}
+
+.heat-3 {
+  background: rgba(0, 96, 148, 0.6);
+}
+
+.heat-4 {
+  background: var(--accent);
+}
 
 .heatmap-legend {
   display: flex;
@@ -568,13 +630,6 @@ const donutSegments = computed(() => {
   line-height: 1.6;
 }
 
-.insight-link {
-  color: var(--accent);
-  cursor: pointer;
-  font-weight: 500;
-}
-
-/* 优先级分布 */
 .priority-bars {
   display: flex;
   flex-direction: column;

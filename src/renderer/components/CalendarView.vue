@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, inject, watch, type Ref } from 'vue'
+import { ArrowLeft, ArrowRight, Close, Plus } from '@element-plus/icons-vue'
 import { useTodoStore } from '../stores/todo'
 import type { Todo } from '../utils/helpers'
 import TodoForm from './TodoForm.vue'

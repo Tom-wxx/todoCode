@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Moon, Sunny } from '@element-plus/icons-vue'
 import { useSettingsStore } from '../stores/settings'
 import { getApi } from '../utils/api'
 
@@ -17,13 +18,13 @@ function close() { getApi().window.close() }
     <div class="title-bar-center">
       <button
         class="nav-tab"
-        :class="{ active: !settingsStore.showStats && !settingsStore.showSettings }"
-        @click="settingsStore.showStats = false; settingsStore.showSettings = false"
+        :class="{ active: !settingsStore.showStats && !settingsStore.showSettings && !settingsStore.showCalendar }"
+        @click="settingsStore.showStats = false; settingsStore.showSettings = false; settingsStore.showCalendar = false"
       >工作台</button>
       <button
         class="nav-tab"
         :class="{ active: settingsStore.showStats }"
-        @click="settingsStore.showStats = true; settingsStore.showSettings = false"
+        @click="settingsStore.showStats = true; settingsStore.showSettings = false; settingsStore.showCalendar = false"
       >数据统计</button>
     </div>
     <div class="title-bar-actions">

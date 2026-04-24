@@ -15,6 +15,14 @@ export interface IApi {
   theme: {
     getSystem: () => Promise<boolean>
   }
+  notify: {
+    show: (title: string, body: string) => Promise<void>
+  }
+  app: {
+    getVersion: () => Promise<string>
+    onBeforeQuit: (callback: () => void) => void
+    notifyFlushDone: () => void
+  }
   config: {
     get: () => Promise<{
       dataPath: string

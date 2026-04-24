@@ -3,6 +3,7 @@ out/
 dist/
 .playwright-mcp/
 .claude/
+.idea/
 
 *.log
 *.tsbuildinfo

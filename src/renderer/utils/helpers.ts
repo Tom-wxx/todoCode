@@ -5,24 +5,38 @@ export function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2)
 }
 
-function localDateStr(): string {
-  const d = new Date()
+function formatLocalYMD(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
+// 把任意日期字符串统一转成本地日期 YYYY-MM-DD。
+// - "YYYY-MM-DD"：直接原样返回（el-date-picker 的格式）
+// - ISO（带 Z）：按本地时区换算到当天
+export function toLocalDateStr(value: string | null | undefined): string {
+  if (!value) return ''
+  // 纯日期格式直接返回，避免被 new Date() 当成 UTC 解析
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value
+  const d = new Date(value)
+  if (Number.isNaN(d.getTime())) return ''
+  return formatLocalYMD(d)
+}
+
+export function todayLocalStr(): string {
+  return formatLocalYMD(new Date())
+}
+
 export function formatDate(date: string | null): string {
-  if (!date) return ''
-  return date.slice(0, 10)
+  return toLocalDateStr(date)
 }
 
 export function isOverdue(dueDate: string | null): boolean {
   if (!dueDate) return false
-  return dueDate.slice(0, 10) < localDateStr()
+  return toLocalDateStr(dueDate) < todayLocalStr()
 }
 
 export function isToday(dueDate: string | null): boolean {
   if (!dueDate) return false
-  return dueDate.slice(0, 10) === localDateStr()
+  return toLocalDateStr(dueDate) === todayLocalStr()
 }
 
 export interface Todo {

@@ -17,6 +17,16 @@ const api = {
   theme: {
     getSystem: () => ipcRenderer.invoke('theme:get-system')
   },
+  notify: {
+    show: (title: string, body: string) => ipcRenderer.invoke('notify:show', title, body)
+  },
+  app: {
+    getVersion: () => ipcRenderer.invoke('app:getVersion'),
+    onBeforeQuit: (callback: () => void) => {
+      ipcRenderer.on('app:before-quit', () => callback())
+    },
+    notifyFlushDone: () => ipcRenderer.send('app:flush-done')
+  },
   config: {
     get: () => ipcRenderer.invoke('config:get'),
     setDataPath: () => ipcRenderer.invoke('config:setDataPath'),

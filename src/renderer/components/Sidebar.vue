@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useTodoStore } from '../stores/todo'
 import { useSettingsStore } from '../stores/settings'
 import { CATEGORY_COLORS } from '../utils/constants'
+import { Brush, Calendar, Check, CircleCheck, DataAnalysis, Download, List, Plus, Setting, Upload, WarningFilled } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const todoStore = useTodoStore()
@@ -56,6 +57,7 @@ async function handleRemoveCategory(name: string) {
     } else {
       await ElMessageBox.confirm(`确定删除分类「${name}」？`, '提示', { type: 'warning' })
     }
+    await todoStore.clearCategory(name)
     await settingsStore.removeCategory(name)
     if (todoStore.currentFilter === name) {
       todoStore.setFilter('all')

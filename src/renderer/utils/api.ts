@@ -48,6 +48,25 @@ const fallbackApi: IApi = {
   theme: {
     getSystem: async () => window.matchMedia('(prefers-color-scheme: dark)').matches
   },
+  notify: {
+    show: async (title: string, body: string) => {
+      // 浏览器模式下使用 Web Notification（需用户授权），失败时静默
+      try {
+        if (typeof Notification === 'undefined') return
+        if (Notification.permission === 'granted') {
+          new Notification(title, { body })
+        } else if (Notification.permission !== 'denied') {
+          const perm = await Notification.requestPermission()
+          if (perm === 'granted') new Notification(title, { body })
+        }
+      } catch { /* ignore */ }
+    }
+  },
+  app: {
+    getVersion: async () => '（浏览器模式）',
+    onBeforeQuit: () => { /* 浏览器模式下不需要 */ },
+    notifyFlushDone: () => { /* 浏览器模式下不需要 */ }
+  },
   config: {
     get: async () => ({
       dataPath: '（浏览器模式 - 内存存储）',

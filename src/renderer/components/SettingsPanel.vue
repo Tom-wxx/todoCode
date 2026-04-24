@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { Back, Folder, FolderOpened, RefreshRight } from '@element-plus/icons-vue'
 import { useSettingsStore } from '../stores/settings'
 import { getApi } from '../utils/api'
 import { ElMessage } from 'element-plus'
@@ -11,9 +12,11 @@ const logPath = ref('')
 const logEnabled = ref(true)
 const defaultDataPath = ref('')
 const defaultLogPath = ref('')
+const appVersion = ref('')
 
 onMounted(async () => {
   await loadConfig()
+  appVersion.value = await getApi().app.getVersion()
 })
 
 async function loadConfig() {
@@ -70,7 +73,7 @@ function openFolder(path: string) {
         <h2 class="settings-title">设置</h2>
         <p class="settings-sub">管理你的应用偏好</p>
       </div>
-      <button class="back-btn" @click="settingsStore.showStats = false; settingsStore.showSettings = false">
+      <button class="back-btn" @click="settingsStore.showStats = false; settingsStore.showSettings = false; settingsStore.showCalendar = false">
         <el-icon><Back /></el-icon> 返回
       </button>
     </div>
@@ -156,7 +159,7 @@ function openFolder(path: string) {
         <div class="setting-item">
           <div class="setting-info">
             <div class="setting-label">数字静修所</div>
-            <div class="setting-desc">版本 1.0.0</div>
+            <div class="setting-desc">版本 {{ appVersion }}</div>
           </div>
         </div>
       </div>
